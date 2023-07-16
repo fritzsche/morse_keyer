@@ -416,12 +416,56 @@ m.displayCallback = (ev) => {
 }
 const button = document.getElementById("morse");
 
+class MorseKeyer {
+    constructor(ctx, wpm = 20, freq = 650, farnsworth = 999) {
+        this._ctx = ctx; // web audio context
+
+        this._gain = this._ctx.createGain()
+        this._gain.connect(this._ctx.destination)
+        //        const clip_vol = 1.8 * Math.exp(-0.115 * 12 )
+        this._gain.gain.value = 0.5 * 0.5 * 0.6
+    
+        this._lpf = this._ctx.createBiquadFilter()
+        this._lpf.type = "lowpass"
+        this._lpf.frequency.setValueAtTime(freq, this._ctx.currentTime)
+        this._lpf.Q.setValueAtTime(12, this._ctx.currentTime)
+        this._lpf.connect(this._gain)
+    
+        this._cwGain = this._ctx.createGain()
+        this._cwGain.gain.value = 0
+        this._cwGain.connect(this._lpf)
+    
+        this._oscillator = this._ctx.createOscillator()
+        this._oscillator.type = 'sine'
+        this._oscillator.frequency.setValueAtTime(freq, this._ctx.currentTime)
+        this._oscillator.connect(this._cwGain)
+        this._oscillator.start()
+    }
+    keydown() {
+        this._cwGain.gain.value = 1
+    }
+    keyup() {
+        this._cwGain.gain.value = 0
+    }    
+}
+
 // focus text box on load
 window.onload = function() {
     document.getElementById("txt").focus();
+
+    let morseKeyer = new MorseKeyer(audioCtx, wpm, freq, fw);
+
+
     document.getElementById("txt").onkeydown = function(e) {
         console.log(e)
+        morseKeyer.keydown( )
+
     }   
+    document.getElementById("txt").onkeyup = function(e) {
+        console.log( "up",  e)
+        morseKeyer.keyup( )
+
+    }     
   }
 
 
