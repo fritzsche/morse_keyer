@@ -416,6 +416,16 @@ m.displayCallback = (ev) => {
 }
 const button = document.getElementById("morse");
 
+// focus text box on load
+window.onload = function() {
+    document.getElementById("txt").focus();
+    document.getElementById("txt").onkeydown = function(e) {
+        console.log(e)
+    }   
+  }
+
+
+
 button.onclick = function () {
     switch (m.state) {
         case 'STARTED':
