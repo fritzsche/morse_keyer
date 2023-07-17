@@ -439,12 +439,25 @@ class MorseKeyer {
         this._oscillator.type = 'sine'
         this._oscillator.frequency.setValueAtTime(freq, this._ctx.currentTime)
         this._oscillator.connect(this._cwGain)
-        this._oscillator.start()
+//        this._oscillator.start()
+        this._started = false
     }
+
+    start() {
+        if (this._started === false) {
+            this._oscillator.start()
+            this._started = true;
+        }
+
+    }
+    
     keydown() {
+        this.start()
+
         this._cwGain.gain.value = 1
     }
     keyup() {
+        this.start()
         this._cwGain.gain.value = 0
     }    
 }
