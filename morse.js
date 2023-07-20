@@ -416,6 +416,10 @@ m.displayCallback = (ev) => {
 }
 const button = document.getElementById("morse");
 
+
+const DIT_KEY = 1
+const DAH_KEY = 2
+
 class MorseKeyer {
     constructor(ctx, wpm = 12, freq = 600) {
         this._ctx = ctx; // web audio context
@@ -462,33 +466,43 @@ class MorseKeyer {
         return cpmDitSpeed / cpm;
     }
 
-    playDitElement(){
-//        this.start()
+    playDitElement() {
+        //        this.start()
         this._cwGain.gain.value = 1
         this._ctx.currentTime
-        this._cwGain.gain.setValueAtTime(0, this._ctx.currentTime+3*this._ditLen) 
+        this._cwGain.gain.setValueAtTime(0, this._ctx.currentTime + this._ditLen)
+    }
+
+    playDahElement() {
+        //        this.start()
+        this._cwGain.gain.value = 1
+        this._ctx.currentTime
+        this._cwGain.gain.setValueAtTime(0, this._ctx.currentTime + 3 * this._ditLen)
     }
 
 
 
-start() {
-    if (this._started === false) {
-        this._oscillator.start()
-        this._started = true;
+    start() {
+        if (this._started === false) {
+            this._oscillator.start()
+            this._started = true;
+        }
+
     }
 
-}
+    keydown(key) {
+        this.start()
 
-keydown() {
-    this.start()
-
- //   this._cwGain.gain.value = 1
-    this.playDitElement()
-}
-keyup() {
-    this.start()
-    this._cwGain.gain.value = 0
-}    
+        //   this._cwGain.gain.value = 1
+      if (key === DAH_KEY)
+         this.playDahElement()
+         else
+          this.playDitElement()
+    }
+    keyup() {
+        this.start()
+        this._cwGain.gain.value = 0
+    }
 }
 
 // focus text box on load
@@ -500,12 +514,20 @@ window.onload = function () {
 
     document.getElementById("txt").onkeydown = function (e) {
         console.log(e)
-        morseKeyer.keydown()
+        // debugger;
+        if (event.code == "ShiftLeft") {
+            morseKeyer.keydown(DIT_KEY)
+        }
+        if (event.code == "ShiftRight") {
+            morseKeyer.keydown(DAH_KEY)
+        }        
 
     }
     document.getElementById("txt").onkeyup = function (e) {
         console.log("up", e)
-        morseKeyer.keyup()
+        if (event.code == "ShiftLeft") {
+            morseKeyer.keyup()
+        }
 
     }
 }
