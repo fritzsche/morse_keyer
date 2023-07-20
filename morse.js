@@ -163,9 +163,9 @@ class Morse {
         clearTimeout(this._stopTimer)
         // in case we already schedules all entries we need to set 
         // position to last element
-        if ( this._currPos >= this._seqence.length ) this._currPos = this._seqence.length - 1
-        for (;;) {
-            
+        if (this._currPos >= this._seqence.length) this._currPos = this._seqence.length - 1
+        for (; ;) {
+
             console.log(this._currPos, this._seqence[this._currPos].time, time, this._seqence[this._currPos].action)
             const seq = this._seqence[this._currPos]
 
@@ -207,7 +207,7 @@ class Morse {
             let reschedule = true
             let current = this._ctx.currentTime;
             let delta = current - this._startTime;
-            for (;;) {
+            for (; ;) {
                 if (this._currPos >= this._seqence.length) {
                     reschedule = false
                     if (this._seqence.length > 0) {
@@ -222,7 +222,7 @@ class Morse {
                             this._currPos = 0;
 
                         }, milis);
-                    } 
+                    }
                     // this._gain.gain.exponentialRampToValueAtTime(0, this._ctx.currentTime + 1.00)
                     break; // exit look if current position reach end
                 }
@@ -417,69 +417,98 @@ m.displayCallback = (ev) => {
 const button = document.getElementById("morse");
 
 class MorseKeyer {
-    constructor(ctx, wpm = 20, freq = 650, farnsworth = 999) {
+    constructor(ctx, wpm = 12, freq = 600) {
         this._ctx = ctx; // web audio context
 
         this._gain = this._ctx.createGain()
         this._gain.connect(this._ctx.destination)
         //        const clip_vol = 1.8 * Math.exp(-0.115 * 12 )
         this._gain.gain.value = 0.5 * 0.5 * 0.6
-    
+
         this._lpf = this._ctx.createBiquadFilter()
         this._lpf.type = "lowpass"
         this._lpf.frequency.setValueAtTime(freq, this._ctx.currentTime)
         this._lpf.Q.setValueAtTime(12, this._ctx.currentTime)
         this._lpf.connect(this._gain)
-    
+
         this._cwGain = this._ctx.createGain()
         this._cwGain.gain.value = 0
         this._cwGain.connect(this._lpf)
-    
+
         this._oscillator = this._ctx.createOscillator()
         this._oscillator.type = 'sine'
         this._oscillator.frequency.setValueAtTime(freq, this._ctx.currentTime)
         this._oscillator.connect(this._cwGain)
-//        this._oscillator.start()
+        //        this._oscillator.start()
         this._started = false
+        this._wpm = Number(wpm);
+        this._ditLen = this._ditLength(this._wpm * 5)
     }
 
-    start() {
-        if (this._started === false) {
-            this._oscillator.start()
-            this._started = true;
-        }
 
+    _ditLength(cpm) {
+        // The standard word "PARIS" has 50 units of time. 
+        // .--.  .-  .-.  ..  ... ==> "PARIS"
+        // 10 dit + 4 dah + 9 dit space + 4 dah space = 19 dit + 24 dit = 43 dit.
+        // 43 dit + 7 dit between words results in 50 dits total time
+        //
+        // 100cpm (character per minute) 
+        // means we need to give 20 times to word "PARIS".
+        // means we give 20 times 50 units of time = 1000 units of time per minute (or 60 seconds).
+        // 60 seconds devided by 1000 unit of time, means each unit (dit) takes 60ms.
+        // Means at  speed of 100 cpm  a dit has 60ms length
+        // length of one dit in s = ( 60ms * 100 ) / 1000        
+        const cpmDitSpeed = (60 * 100) / 1000;
+        return cpmDitSpeed / cpm;
     }
-    
-    keydown() {
-        this.start()
 
+    playDitElement(){
+//        this.start()
         this._cwGain.gain.value = 1
+        this._ctx.currentTime
+        this._cwGain.gain.setValueAtTime(0, this._ctx.currentTime+3*this._ditLen) 
     }
-    keyup() {
-        this.start()
-        this._cwGain.gain.value = 0
-    }    
+
+
+
+start() {
+    if (this._started === false) {
+        this._oscillator.start()
+        this._started = true;
+    }
+
+}
+
+keydown() {
+    this.start()
+
+ //   this._cwGain.gain.value = 1
+    this.playDitElement()
+}
+keyup() {
+    this.start()
+    this._cwGain.gain.value = 0
+}    
 }
 
 // focus text box on load
-window.onload = function() {
+window.onload = function () {
     document.getElementById("txt").focus();
 
     let morseKeyer = new MorseKeyer(audioCtx, wpm, freq, fw);
 
 
-    document.getElementById("txt").onkeydown = function(e) {
+    document.getElementById("txt").onkeydown = function (e) {
         console.log(e)
-        morseKeyer.keydown( )
+        morseKeyer.keydown()
 
-    }   
-    document.getElementById("txt").onkeyup = function(e) {
-        console.log( "up",  e)
-        morseKeyer.keyup( )
+    }
+    document.getElementById("txt").onkeyup = function (e) {
+        console.log("up", e)
+        morseKeyer.keyup()
 
-    }     
-  }
+    }
+}
 
 
 
