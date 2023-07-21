@@ -420,6 +420,10 @@ const button = document.getElementById("morse");
 const DIT_KEY = 1
 const DAH_KEY = 2
 
+const DOWN = 1
+const UP = 2
+
+
 class MorseKeyer {
     constructor(ctx, wpm = 12, freq = 600) {
         this._ctx = ctx; // web audio context
@@ -447,6 +451,9 @@ class MorseKeyer {
         this._started = false
         this._wpm = Number(wpm);
         this._ditLen = this._ditLength(this._wpm * 5)
+
+        this._ditKey = UP
+        this._dahKey = UP
     }
 
 
@@ -492,16 +499,24 @@ class MorseKeyer {
 
     keydown(key) {
         this.start()
+        if (key === DAH_KEY) {
+            this._dahKey = DOWN
+            this.playDahElement()
+        }
+        else {
+            this._ditKey = DOWN
+            this.playDitElement()
 
-        //   this._cwGain.gain.value = 1
-      if (key === DAH_KEY)
-         this.playDahElement()
-         else
-          this.playDitElement()
+        }
     }
-    keyup() {
+    keyup(key) {
         this.start()
-        this._cwGain.gain.value = 0
+        if (key === DAH_KEY) {    
+            this._dahKey = UP      
+        } else {
+            this._ditKey = UP     
+        }
+
     }
 }
 
@@ -520,7 +535,7 @@ window.onload = function () {
         }
         if (event.code == "ShiftRight") {
             morseKeyer.keydown(DAH_KEY)
-        }        
+        }
 
     }
     document.getElementById("txt").onkeyup = function (e) {
