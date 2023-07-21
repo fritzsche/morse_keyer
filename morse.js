@@ -474,39 +474,45 @@ class MorseKeyer {
     }
 
     playDitElement() {
-        //        this.start()
         this._cwGain.gain.value = 1
         this._ctx.currentTime
         this._cwGain.gain.setValueAtTime(0, this._ctx.currentTime + this._ditLen)
     }
 
     playDahElement() {
-        //        this.start()
         this._cwGain.gain.value = 1
         this._ctx.currentTime
         this._cwGain.gain.setValueAtTime(0, this._ctx.currentTime + 3 * this._ditLen)
     }
-
-
 
     start() {
         if (this._started === false) {
             this._oscillator.start()
             this._started = true;
         }
-
     }
+
+    swing() {
+        if ( this._ditKey === DOWN ) {
+            this.playDitElement()
+            setTimeout(() => { this.swing() }, 2 * this._ditLen * 1000 )    
+        }
+        if ( this._dahKey === DOWN) {
+            this.playDahElement()
+            setTimeout(() => { this.swing() }, 4 * this._ditLen * 1000 )    
+        }            
+    }
+
 
     keydown(key) {
         this.start()
         if (key === DAH_KEY) {
             this._dahKey = DOWN
-            this.playDahElement()
+            this.swing()
         }
         else {
             this._ditKey = DOWN
-            this.playDitElement()
-
+            this.swing()
         }
     }
     keyup(key) {
@@ -516,33 +522,29 @@ class MorseKeyer {
         } else {
             this._ditKey = UP     
         }
-
     }
 }
 
 // focus text box on load
 window.onload = function () {
     document.getElementById("txt").focus();
-
     let morseKeyer = new MorseKeyer(audioCtx, wpm, freq, fw);
-
-
     document.getElementById("txt").onkeydown = function (e) {
-        console.log(e)
-        // debugger;
-        if (event.code == "ShiftLeft") {
+        if (e.code == "ShiftLeft") {
             morseKeyer.keydown(DIT_KEY)
         }
-        if (event.code == "ShiftRight") {
+        if (e.code == "ShiftRight") {
             morseKeyer.keydown(DAH_KEY)
         }
 
     }
     document.getElementById("txt").onkeyup = function (e) {
-        console.log("up", e)
-        if (event.code == "ShiftLeft") {
-            morseKeyer.keyup()
+        if (e.code == "ShiftLeft") {
+            morseKeyer.keyup(DIT_KEY)
         }
+        if (e.code == "ShiftRight") {
+            morseKeyer.keyup(DAH_KEY)
+        }        
 
     }
 }
