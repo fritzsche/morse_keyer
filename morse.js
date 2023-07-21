@@ -419,6 +419,8 @@ const button = document.getElementById("morse");
 
 const DIT_KEY = 1
 const DAH_KEY = 2
+const NO_KEY = 3
+
 
 const DOWN = 1
 const UP = 2
@@ -454,6 +456,8 @@ class MorseKeyer {
 
         this._ditKey = UP
         this._dahKey = UP
+        this._nextAction = NO_KEY
+        this._iambic = false
     }
 
 
@@ -474,12 +478,14 @@ class MorseKeyer {
     }
 
     playDitElement() {
+        console.log("dit")
         this._cwGain.gain.value = 1
         this._ctx.currentTime
         this._cwGain.gain.setValueAtTime(0, this._ctx.currentTime + this._ditLen)
     }
 
     playDahElement() {
+        console.log("dah")
         this._cwGain.gain.value = 1
         this._ctx.currentTime
         this._cwGain.gain.setValueAtTime(0, this._ctx.currentTime + 3 * this._ditLen)
@@ -493,15 +499,52 @@ class MorseKeyer {
     }
 
     swing() {
-        if ( this._ditKey === DOWN ) {
-            this.playDitElement()
-            setTimeout(() => { this.swing() }, 2 * this._ditLen * 1000 )    
+        switch (true) {
+            // if both keys released stop swing
+            case this._ditKey === UP && this._dahKey === UP:
+                console.log("none")
+                this._nextAction = NO_KEY
+                break
+            case this._ditKey === DOWN && this._dahKey === DOWN: //&& this._dahKey === DOWN
+                console.log("both" + this._nextAction)
+                // if not yet iambic action: start it
+                if (this._iambic === false) {
+                    this._iambic = true
+                    break
+                }
+                if (this._nextAction === DAH_KEY) {
+
+                    this._nextAction = DIT_KEY
+                    this.playDitElement()
+                    setTimeout(() => { this.swing() }, 2 * this._ditLen * 1000)
+                } else {
+                    this._nextAction = DAH_KEY
+                    this.playDahElement()
+                    setTimeout(() => { this.swing() }, 4 * this._ditLen * 1000)
+                }
+                break
+            // only dit key
+            case this._ditKey === DOWN:
+                console.log("onlyDit")
+                this._iambic = false
+
+                this._nextAction = DIT_KEY
+                this.playDitElement()
+                setTimeout(() => { this.swing() }, 2 * this._ditLen * 1000)
+                break
+
+            // only dah key
+            case this._dahKey === DOWN:
+                console.log("only Dah")
+                this._iambic = false
+
+                this._nextAction = DAH_KEY
+                this.playDahElement()
+                setTimeout(() => { this.swing() }, 4 * this._ditLen * 1000)
+                break
         }
-        if ( this._dahKey === DOWN) {
-            this.playDahElement()
-            setTimeout(() => { this.swing() }, 4 * this._ditLen * 1000 )    
-        }            
     }
+
 
 
     keydown(key) {
@@ -517,10 +560,10 @@ class MorseKeyer {
     }
     keyup(key) {
         this.start()
-        if (key === DAH_KEY) {    
-            this._dahKey = UP      
+        if (key === DAH_KEY) {
+            this._dahKey = UP
         } else {
-            this._ditKey = UP     
+            this._ditKey = UP
         }
     }
 }
@@ -530,21 +573,22 @@ window.onload = function () {
     document.getElementById("txt").focus();
     let morseKeyer = new MorseKeyer(audioCtx, wpm, freq, fw);
     document.getElementById("txt").onkeydown = function (e) {
-        if (e.code == "ShiftLeft") {
+        console.log(e)
+        if (e.code === "ShiftLeft" || e.code === "ControlLeft") {
             morseKeyer.keydown(DIT_KEY)
         }
-        if (e.code == "ShiftRight") {
+        if (e.code === "ShiftRight" || e.code === "ControlRight") {
             morseKeyer.keydown(DAH_KEY)
         }
 
     }
     document.getElementById("txt").onkeyup = function (e) {
-        if (e.code == "ShiftLeft") {
+        if (e.code == "ShiftLeft" || e.code === "ControlLeft") {
             morseKeyer.keyup(DIT_KEY)
         }
-        if (e.code == "ShiftRight") {
+        if (e.code == "ShiftRight" || e.code === "ControlRight") {
             morseKeyer.keyup(DAH_KEY)
-        }        
+        }
 
     }
 }
