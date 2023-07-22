@@ -505,20 +505,15 @@ class MorseKeyer {
                 console.log("none")
                 this._nextAction = NO_KEY
                 break
-            case this._ditKey === DOWN && this._dahKey === DOWN: //&& this._dahKey === DOWN
+            case this._iambic:
                 console.log("both" + this._nextAction)
-                // if not yet iambic action: start it
-                if (this._iambic === false) {
-                    this._iambic = true
-                    break
-                }
-                if (this._nextAction === DAH_KEY) {
+                if (this._nextAction === DIT_KEY) {
 
-                    this._nextAction = DIT_KEY
+                    this._nextAction = DAH_KEY
                     this.playDitElement()
                     setTimeout(() => { this.swing() }, 2 * this._ditLen * 1000)
                 } else {
-                    this._nextAction = DAH_KEY
+                    this._nextAction = DIT_KEY
                     this.playDahElement()
                     setTimeout(() => { this.swing() }, 4 * this._ditLen * 1000)
                 }
@@ -526,7 +521,6 @@ class MorseKeyer {
             // only dit key
             case this._ditKey === DOWN:
                 console.log("onlyDit")
-                this._iambic = false
 
                 this._nextAction = DIT_KEY
                 this.playDitElement()
@@ -536,8 +530,7 @@ class MorseKeyer {
             // only dah key
             case this._dahKey === DOWN:
                 console.log("only Dah")
-                this._iambic = false
-
+                
                 this._nextAction = DAH_KEY
                 this.playDahElement()
                 setTimeout(() => { this.swing() }, 4 * this._ditLen * 1000)
@@ -551,15 +544,23 @@ class MorseKeyer {
         this.start()
         if (key === DAH_KEY) {
             this._dahKey = DOWN
-            this.swing()
+            if ( this._ditKey === DOWN ) {
+                this._iambic = true
+                this._nextAction = DAH_KEY
+            } else this.swing()
         }
         else {
             this._ditKey = DOWN
-            this.swing()
+            if ( this._dahKey === DOWN ) {
+                this._iambic = true
+                console.log("H1 "+this._nextAction )
+                this._nextAction = DIT_KEY
+            } else this.swing()
         }
     }
     keyup(key) {
         this.start()
+        this._iambic = false        
         if (key === DAH_KEY) {
             this._dahKey = UP
         } else {
