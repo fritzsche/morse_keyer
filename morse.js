@@ -417,9 +417,9 @@ m.displayCallback = (ev) => {
 const button = document.getElementById("morse");
 
 
-const DIT_KEY = 1
-const DAH_KEY = 2
-const NO_KEY = 3
+const DIT = 1
+const DAH = 2
+const NONE = 3
 
 
 const DOWN = 1
@@ -456,7 +456,7 @@ class MorseKeyer {
 
         this._ditKey = UP
         this._dahKey = UP
-        this._nextAction = NO_KEY
+        this._nextAction = NONE
         this._iambic = false
     }
 
@@ -503,17 +503,17 @@ class MorseKeyer {
             // if both keys released stop swing
             case this._ditKey === UP && this._dahKey === UP:
                 console.log("none")
-                this._nextAction = NO_KEY
-                break
+                this._nextAction = NONE
+                return
             case this._iambic:
                 console.log("both" + this._nextAction)
-                if (this._nextAction === DIT_KEY) {
+                if (this._nextAction === DIT) {
 
-                    this._nextAction = DAH_KEY
+                    this._nextAction = DAH
                     this.playDitElement()
                     setTimeout(() => { this.swing() }, 2 * this._ditLen * 1000)
                 } else {
-                    this._nextAction = DIT_KEY
+                    this._nextAction = DIT
                     this.playDahElement()
                     setTimeout(() => { this.swing() }, 4 * this._ditLen * 1000)
                 }
@@ -522,7 +522,7 @@ class MorseKeyer {
             case this._ditKey === DOWN:
                 console.log("onlyDit")
 
-                this._nextAction = DIT_KEY
+                this._nextAction = DIT
                 this.playDitElement()
                 setTimeout(() => { this.swing() }, 2 * this._ditLen * 1000)
                 break
@@ -531,7 +531,7 @@ class MorseKeyer {
             case this._dahKey === DOWN:
                 console.log("only Dah")
                 
-                this._nextAction = DAH_KEY
+                this._nextAction = DAH
                 this.playDahElement()
                 setTimeout(() => { this.swing() }, 4 * this._ditLen * 1000)
                 break
@@ -542,26 +542,21 @@ class MorseKeyer {
 
     keydown(key) {
         this.start()
-        if (key === DAH_KEY) {
+        if (key === DAH) {
             this._dahKey = DOWN
-            if ( this._ditKey === DOWN ) {
-                this._iambic = true
-                this._nextAction = DAH_KEY
-            } else this.swing()
+            this._nextAction = DAH            
         }
         else {
             this._ditKey = DOWN
-            if ( this._dahKey === DOWN ) {
-                this._iambic = true
-                console.log("H1 "+this._nextAction )
-                this._nextAction = DIT_KEY
-            } else this.swing()
+            this._nextAction = DIT            
         }
+        if ( this._ditKey === DOWN && this._dahKey === DOWN ) this._iambic = true
+        else this.swing()
     }
     keyup(key) {
         this.start()
         this._iambic = false        
-        if (key === DAH_KEY) {
+        if (key === DAH) {
             this._dahKey = UP
         } else {
             this._ditKey = UP
@@ -576,19 +571,19 @@ window.onload = function () {
     document.getElementById("txt").onkeydown = function (e) {
         console.log(e)
         if (e.code === "ShiftLeft" || e.code === "ControlLeft") {
-            morseKeyer.keydown(DIT_KEY)
+            morseKeyer.keydown(DIT)
         }
         if (e.code === "ShiftRight" || e.code === "ControlRight") {
-            morseKeyer.keydown(DAH_KEY)
+            morseKeyer.keydown(DAH)
         }
 
     }
     document.getElementById("txt").onkeyup = function (e) {
         if (e.code == "ShiftLeft" || e.code === "ControlLeft") {
-            morseKeyer.keyup(DIT_KEY)
+            morseKeyer.keyup(DIT)
         }
         if (e.code == "ShiftRight" || e.code === "ControlRight") {
-            morseKeyer.keyup(DAH_KEY)
+            morseKeyer.keyup(DAH)
         }
 
     }
