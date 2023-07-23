@@ -427,7 +427,7 @@ const UP = 2
 
 
 class MorseKeyer {
-    constructor(ctx, wpm = 12, freq = 600) {
+    constructor(ctx, wpm = 25, freq = 600) {
         this._ctx = ctx; // web audio context
 
         this._gain = this._ctx.createGain()
@@ -456,8 +456,9 @@ class MorseKeyer {
 
         this._ditKey = UP
         this._dahKey = UP
-        this._nextAction = NONE
+        this._memory = NONE
         this._iambic = false
+        this._ticking = false
     }
 
 
@@ -498,7 +499,70 @@ class MorseKeyer {
         }
     }
 
-    swing() {
+    tick() {
+// called at begin of each tick        
+        this._ticking = true
+// check memory        
+    if ( this._memory === DIT ) {
+        // delete memory
+        this._memory = NONE        
+        this.playDitElement()
+        setTimeout(() => { this.tick() }, 2 * this._ditLen * 1000)   
+        return     
+    }
+
+    if ( this._memory === DAH ) {
+        // delete memory
+        this._memory = NONE        
+        this.playDahElement()
+        setTimeout(() => { this.tick() }, 4 * this._ditLen * 1000)
+        return     
+    }    
+
+/*
+if ( this._iambic ) {
+            if ( this._memory === DIT ) this._memory = DAH
+            if ( this._memory === DAH ) this._memory = DIT
+        }
+*/
+// check left key
+        if (this._ditKey === DOWN && this._dahKey === UP ) {
+            this.playDitElement()
+            setTimeout(() => { this.tick() }, 2 * this._ditLen * 1000)
+            return            
+        }
+// check right key        
+        if (this._ditKey === UP && this._dahKey === DOWN ) {
+            this.playDahElement()
+            setTimeout(() => { this.tick() }, 4 * this._ditLen * 1000)
+            return
+        }
+// check stop
+        if (this._memory === NONE ) {
+            this._ticking = false
+        }
+
+
+
+
+
+
+/*        switch ( this._nextAction ) {
+            case NONE:
+
+                 this._swinging = false
+                 return
+            case DAH:
+                this.playDahElement()
+                setTimeout(() => { this.swing() }, 4 * this._ditLen * 1000)
+                break;
+            case DIT:
+                this.playDitElement()
+                setTimeout(() => { this.swing() }, 2 * this._ditLen * 1000)
+                break                        
+        }
+*/        
+        /*        
         switch (true) {
             // if both keys released stop swing
             case this._ditKey === UP && this._dahKey === UP:
@@ -536,6 +600,7 @@ class MorseKeyer {
                 setTimeout(() => { this.swing() }, 4 * this._ditLen * 1000)
                 break
         }
+*/
     }
 
 
@@ -544,30 +609,34 @@ class MorseKeyer {
         this.start()
         if (key === DAH) {
             this._dahKey = DOWN
-            this._nextAction = DAH            
+            if (this._ticking) this._memory = DAH            
         }
         else {
             this._ditKey = DOWN
-            this._nextAction = DIT            
+            if (this._ticking) this._memory = DIT            
         }
         if ( this._ditKey === DOWN && this._dahKey === DOWN ) this._iambic = true
-        else this.swing()
+
+        if ( ! this._ticking )  this.tick()
     }
     keyup(key) {
         this.start()
         this._iambic = false        
         if (key === DAH) {
             this._dahKey = UP
+//            this._memory = DIT
         } else {
             this._ditKey = UP
+//            this._memory = DAH
         }
+//        if ( this._ditKey === UP && this._dahKey === UP ) this._memory = NONE
     }
 }
 
 // focus text box on load
 window.onload = function () {
     document.getElementById("txt").focus();
-    let morseKeyer = new MorseKeyer(audioCtx, wpm, freq, fw);
+    let morseKeyer = new MorseKeyer(audioCtx, 12, freq, fw);
     document.getElementById("txt").onkeydown = function (e) {
         console.log(e)
         if (e.code === "ShiftLeft" || e.code === "ControlLeft") {
