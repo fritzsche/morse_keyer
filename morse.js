@@ -447,16 +447,14 @@ class MorseKeyer {
     playDitElement() {
         console.log("dit")
         this._lastElement = DIT
-        this._cwGain.gain.value = 1
-//        this._ctx.currentTime
+        this._cwGain.gain.setValueAtTime(1, this._ctx.currentTime )
         this._cwGain.gain.setValueAtTime(0, this._ctx.currentTime + this._ditLen)
     }
 
     playDahElement() {
         console.log("dah")
         this._lastElement = DAH
-        this._cwGain.gain.value = 1
-//        this._ctx.currentTime
+        this._cwGain.gain.setValueAtTime(1, this._ctx.currentTime )
         this._cwGain.gain.setValueAtTime(0, this._ctx.currentTime + 3 * this._ditLen)
     }
 
@@ -592,29 +590,25 @@ window.onload = function () {
 
     let morseKeyer = new MorseKeyer(wpm, freq)
 
-
-
     window.onkeydown = function (e) {
-
-        
 
         if (keyAllowed[e.code] === false) return;
         keyAllowed[e.code] = false;
         console.log(e)
         console.log("OK")
-        if (e.code === "ShiftLeft" || e.code === "ControlLeft") {
+        if (e.code === "ShiftLeft" || e.code === "ControlLeft" || e.code === "Period" ) {
             morseKeyer.keydown(DIT)
         }
-        if (e.code === "ShiftRight" || e.code === "ControlRight") {
+        if (e.code === "ShiftRight" || e.code === "ControlRight" || e.code === "Slash" ) {
             morseKeyer.keydown(DAH)
         }
     }
     window.onkeyup = function (e) {
         keyAllowed[e.code] = true;
-        if (e.code == "ShiftLeft" || e.code === "ControlLeft") {
+        if (e.code == "ShiftLeft" || e.code === "ControlLeft" || e.code === "Period") {
             morseKeyer.keyup(DIT)
         }
-        if (e.code == "ShiftRight" || e.code === "ControlRight") {
+        if (e.code == "ShiftRight" || e.code === "ControlRight" || e.code === "Slash") {
             morseKeyer.keyup(DAH)
         }
     }
