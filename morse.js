@@ -448,7 +448,7 @@ class MorseKeyer {
         console.log("dit")
         this._lastElement = DIT
         this._cwGain.gain.value = 1
-        this._ctx.currentTime
+//        this._ctx.currentTime
         this._cwGain.gain.setValueAtTime(0, this._ctx.currentTime + this._ditLen)
     }
 
@@ -456,7 +456,7 @@ class MorseKeyer {
         console.log("dah")
         this._lastElement = DAH
         this._cwGain.gain.value = 1
-        this._ctx.currentTime
+//        this._ctx.currentTime
         this._cwGain.gain.setValueAtTime(0, this._ctx.currentTime + 3 * this._ditLen)
     }
 
