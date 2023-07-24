@@ -594,7 +594,7 @@ window.onload = function () {
         // Problem in Safari: it return 2nd key down event if both ctrl key pressed instead of keyup
         var isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent)
 
-
+        // this prevents multiple keydowns on windows 
         if (!isSafari && keyAllowed[e.code] === false) return;
         keyAllowed[e.code] = false
         console.log("down " + e.code)
@@ -605,7 +605,6 @@ window.onload = function () {
         if (e.code === "ShiftRight" || e.code === "ControlRight" || e.code === "Slash") {
             if (isSafari && morseKeyer._ditKey === DOWN ) morseKeyer.keyup(DAH); 
             else morseKeyer.keydown(DAH)            
-//            morseKeyer.keydown(DAH)
         }
     }
     window.onkeyup = function (e) {
