@@ -528,10 +528,8 @@ class MorseKeyer {
             setTimeout(() => { this.tick() }, 4 * this._ditLen * 1000)
             return
         }
-      // stop if no element was played
+        // stop if no element was played
         this._ticking = false
-
-        
     }
 
 
@@ -562,12 +560,36 @@ class MorseKeyer {
 // focus text box on load
 window.onload = function () {
     let audioCtx = new (window.AudioContext || window.webkitAudioContext)()
-    let wpm = document.getElementById("wpm").value
-    let freq = parseInt(document.getElementById("freq").value)
-    const out = document.getElementById("out");  
+
+
+// store settings in local storage
+
+    const storeSetting =  function (e) {
+        localStorage.setItem("setting", JSON.stringify(
+            {
+                wpm: document.getElementById("wpm").value,
+                freq: document.getElementById("freq").value
+            }
+        ));
+    }   
+    document.getElementById("freq").onchange  = storeSetting 
+    document.getElementById("wpm").onchange = storeSetting
+
+    //    const out = document.getElementById("out");  
     var keyAllowed = {}  // to stop key repeats
-    let morseKeyer = new MorseKeyer(audioCtx, 12, freq);
-    window.onkeydown = function (e) {        
+
+    let setting = JSON.parse(localStorage.getItem("setting"));
+    if (setting) {
+        document.getElementById("wpm").value = setting.wpm
+        document.getElementById("freq").value = setting.freq
+    }
+    let wpm = parseInt(document.getElementById("wpm").value)
+    let freq = parseInt(document.getElementById("freq").value)    
+    let morseKeyer = new MorseKeyer(audioCtx, wpm, freq);
+
+
+
+    window.onkeydown = function (e) {
         if (keyAllowed[e.code] === false) return;
         keyAllowed[e.code] = false;
         console.log(e)
