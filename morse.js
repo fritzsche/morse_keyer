@@ -459,6 +459,7 @@ class MorseKeyer {
         this._memory = NONE
         this._iambic = false
         this._ticking = false
+        this._lastElement = NONE
     }
 
 
@@ -480,6 +481,7 @@ class MorseKeyer {
 
     playDitElement() {
         console.log("dit")
+        this._lastElement = DIT
         this._cwGain.gain.value = 1
         this._ctx.currentTime
         this._cwGain.gain.setValueAtTime(0, this._ctx.currentTime + this._ditLen)
@@ -487,6 +489,7 @@ class MorseKeyer {
 
     playDahElement() {
         console.log("dah")
+        this._lastElement = DAH
         this._cwGain.gain.value = 1
         this._ctx.currentTime
         this._cwGain.gain.setValueAtTime(0, this._ctx.currentTime + 3 * this._ditLen)
@@ -500,161 +503,103 @@ class MorseKeyer {
     }
 
     tick() {
-// called at begin of each tick        
+        // called at begin of each tick        
         this._ticking = true
-// check memory        
-    if ( this._memory === DIT ) {
-        // delete memory
-        this._memory = NONE        
-        this.playDitElement()
-        setTimeout(() => { this.tick() }, 2 * this._ditLen * 1000)   
-        return     
-    }
-
-    if ( this._memory === DAH ) {
-        // delete memory
-        this._memory = NONE        
-        this.playDahElement()
-        setTimeout(() => { this.tick() }, 4 * this._ditLen * 1000)
-        return     
-    }    
-
-/*
-if ( this._iambic ) {
-            if ( this._memory === DIT ) this._memory = DAH
-            if ( this._memory === DAH ) this._memory = DIT
-        }
-*/
-// check left key
-        if (this._ditKey === DOWN && this._dahKey === UP ) {
+        // check memory        
+        if (this._memory === DIT) {
+            // delete memory
+            this._memory = NONE
             this.playDitElement()
             setTimeout(() => { this.tick() }, 2 * this._ditLen * 1000)
-            return            
+            return
         }
-// check right key        
-        if (this._ditKey === UP && this._dahKey === DOWN ) {
+        if (this._memory === DAH) {
+            // delete memory
+            this._memory = NONE
             this.playDahElement()
             setTimeout(() => { this.tick() }, 4 * this._ditLen * 1000)
             return
         }
-// check stop
-        if (this._memory === NONE ) {
+        if (this._iambic) {
+            console.log("iambic" + this._lastElement)
+            if (this._lastElement === DIT) {
+                this.playDahElement()
+                setTimeout(() => { this.tick() }, 4 * this._ditLen * 1000)
+                return
+            } else {
+                this.playDitElement()
+                setTimeout(() => { this.tick() }, 2 * this._ditLen * 1000)
+                return
+            }
+        }
+        // check left key
+        if (this._ditKey === DOWN && this._dahKey === UP) {
+            this.playDitElement()
+            setTimeout(() => { this.tick() }, 2 * this._ditLen * 1000)
+            return
+        }
+        // check right key        
+        if (this._ditKey === UP && this._dahKey === DOWN) {
+            this.playDahElement()
+            setTimeout(() => { this.tick() }, 4 * this._ditLen * 1000)
+            return
+        }
+        // check stop
+        if (this._memory === NONE) {
             this._ticking = false
         }
-
-
-
-
-
-
-/*        switch ( this._nextAction ) {
-            case NONE:
-
-                 this._swinging = false
-                 return
-            case DAH:
-                this.playDahElement()
-                setTimeout(() => { this.swing() }, 4 * this._ditLen * 1000)
-                break;
-            case DIT:
-                this.playDitElement()
-                setTimeout(() => { this.swing() }, 2 * this._ditLen * 1000)
-                break                        
-        }
-*/        
-        /*        
-        switch (true) {
-            // if both keys released stop swing
-            case this._ditKey === UP && this._dahKey === UP:
-                console.log("none")
-                this._nextAction = NONE
-                return
-            case this._iambic:
-                console.log("both" + this._nextAction)
-                if (this._nextAction === DIT) {
-
-                    this._nextAction = DAH
-                    this.playDitElement()
-                    setTimeout(() => { this.swing() }, 2 * this._ditLen * 1000)
-                } else {
-                    this._nextAction = DIT
-                    this.playDahElement()
-                    setTimeout(() => { this.swing() }, 4 * this._ditLen * 1000)
-                }
-                break
-            // only dit key
-            case this._ditKey === DOWN:
-                console.log("onlyDit")
-
-                this._nextAction = DIT
-                this.playDitElement()
-                setTimeout(() => { this.swing() }, 2 * this._ditLen * 1000)
-                break
-
-            // only dah key
-            case this._dahKey === DOWN:
-                console.log("only Dah")
-                
-                this._nextAction = DAH
-                this.playDahElement()
-                setTimeout(() => { this.swing() }, 4 * this._ditLen * 1000)
-                break
-        }
-*/
     }
-
 
 
     keydown(key) {
+        console.log("down")
         this.start()
-        if (key === DAH) {
+        if (key === DAH && this._dahKey === UP) {
             this._dahKey = DOWN
-            if (this._ticking) this._memory = DAH            
+            if (this._ticking) this._memory = DAH
         }
-        else {
+        else if (key === DIT && this._ditKey === UP) {
             this._ditKey = DOWN
-            if (this._ticking) this._memory = DIT            
+            if (this._ticking) this._memory = DIT
         }
-        if ( this._ditKey === DOWN && this._dahKey === DOWN ) this._iambic = true
+        if (this._ditKey === DOWN && this._dahKey === DOWN) this._iambic = true
 
-        if ( ! this._ticking )  this.tick()
+        if (!this._ticking) this.tick()
     }
+
     keyup(key) {
+        console.log("up")
         this.start()
-        this._iambic = false        
-        if (key === DAH) {
-            this._dahKey = UP
-//            this._memory = DIT
-        } else {
-            this._ditKey = UP
-//            this._memory = DAH
-        }
-//        if ( this._ditKey === UP && this._dahKey === UP ) this._memory = NONE
+        this._iambic = false
+        if (key === DAH) this._dahKey = UP; else this._ditKey = UP
     }
 }
 
 // focus text box on load
 window.onload = function () {
+    var keyAllowed = {};
     document.getElementById("txt").focus();
     let morseKeyer = new MorseKeyer(audioCtx, 12, freq, fw);
     document.getElementById("txt").onkeydown = function (e) {
+        if (keyAllowed[e.code] === false) return;
+        keyAllowed[e.code] = false;
         console.log(e)
+        console.log("OK")
         if (e.code === "ShiftLeft" || e.code === "ControlLeft") {
             morseKeyer.keydown(DIT)
         }
         if (e.code === "ShiftRight" || e.code === "ControlRight") {
             morseKeyer.keydown(DAH)
         }
-
     }
     document.getElementById("txt").onkeyup = function (e) {
+        keyAllowed[e.code] = true;
         if (e.code == "ShiftLeft" || e.code === "ControlLeft") {
             morseKeyer.keyup(DIT)
         }
         if (e.code == "ShiftRight" || e.code === "ControlRight") {
             morseKeyer.keyup(DAH)
         }
-
     }
 }
 
