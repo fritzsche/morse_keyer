@@ -400,22 +400,6 @@ class Morse {
         return cpmDitSpeed / cpm;
     }
 }
-let audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-
-let wpm = document.getElementById("wpm").value;
-let fw = document.getElementById("fw").value;
-let freq = parseInt(document.getElementById("freq").value);
-
-let m = new Morse(audioCtx, wpm, freq, fw);
-
-const out = document.getElementById("out");
-//m.text = morseTxt;
-m.displayCallback = (ev) => {
-    out.textContent = ev.text;
-    out.scrollTop = out.scrollHeight;
-}
-const button = document.getElementById("morse");
-
 
 const DIT = 1
 const DAH = 2
@@ -544,10 +528,10 @@ class MorseKeyer {
             setTimeout(() => { this.tick() }, 4 * this._ditLen * 1000)
             return
         }
-        // check stop
-        if (this._memory === NONE) {
-            this._ticking = false
-        }
+      // stop if no element was played
+        this._ticking = false
+
+        
     }
 
 
@@ -577,10 +561,13 @@ class MorseKeyer {
 
 // focus text box on load
 window.onload = function () {
-    var keyAllowed = {};
-    document.getElementById("txt").focus();
-    let morseKeyer = new MorseKeyer(audioCtx, 12, freq, fw);
-    document.getElementById("txt").onkeydown = function (e) {
+    let audioCtx = new (window.AudioContext || window.webkitAudioContext)()
+    let wpm = document.getElementById("wpm").value
+    let freq = parseInt(document.getElementById("freq").value)
+    const out = document.getElementById("out");  
+    var keyAllowed = {}  // to stop key repeats
+    let morseKeyer = new MorseKeyer(audioCtx, 12, freq);
+    window.onkeydown = function (e) {        
         if (keyAllowed[e.code] === false) return;
         keyAllowed[e.code] = false;
         console.log(e)
@@ -592,7 +579,9 @@ window.onload = function () {
             morseKeyer.keydown(DAH)
         }
     }
-    document.getElementById("txt").onkeyup = function (e) {
+    window.onkeyup = function (e) {
+
+
         keyAllowed[e.code] = true;
         if (e.code == "ShiftLeft" || e.code === "ControlLeft") {
             morseKeyer.keyup(DIT)
@@ -605,46 +594,6 @@ window.onload = function () {
 
 
 
-button.onclick = function () {
-    switch (m.state) {
-        case 'STARTED':
-            m.stop();
-            break;
-        default:
-            let freq = parseInt(document.getElementById("freq").value);
-            let morseTxt = document.getElementById("txt").value;
-            let wpm = document.getElementById("wpm").value;
-            let fw = document.getElementById("fw").value;
-            out.textContent = '';
-            out.scrollTop = out.scrollHeight;
-            m.text = morseTxt;
-            m.frequency = freq;
-            m.wpm = wpm;
-            m.farnsworth = fw;
-            m.start();
-            break;
-    }
-}
 
 
 
-const generate = document.getElementById("generate");
-generate.onclick = function () {
-    let random = document.getElementById("random").value
-    random.replace(/\s/g, "")
-    if (random.length > 0) {
-        let randChar = (s) => {
-            return s.charAt(Math.floor(Math.random() * s.length))
-        }
-
-        let r = "";
-        for (let i = 0; i < 2000;) {
-            r += randChar(random)
-            i++
-            if (i % 5 == 0) r += ' '
-            if (i % 50 == 0) r += '\n'
-
-        }
-        document.getElementById("txt").value = r.toLowerCase()
-    }
-}
