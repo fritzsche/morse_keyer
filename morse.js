@@ -411,31 +411,12 @@ const UP = 2
 
 
 class MorseKeyer {
-    constructor(ctx, wpm = 25, freq = 600) {
-        this._ctx = ctx; // web audio context
+    constructor(wpm = 25, freq = 600) {
 
-        this._gain = this._ctx.createGain()
-        this._gain.connect(this._ctx.destination)
-        //        const clip_vol = 1.8 * Math.exp(-0.115 * 12 )
-        this._gain.gain.value = 0.5 * 0.5 * 0.6
-
-        this._lpf = this._ctx.createBiquadFilter()
-        this._lpf.type = "lowpass"
-        this._lpf.frequency.setValueAtTime(freq, this._ctx.currentTime)
-        this._lpf.Q.setValueAtTime(12, this._ctx.currentTime)
-        this._lpf.connect(this._gain)
-
-        this._cwGain = this._ctx.createGain()
-        this._cwGain.gain.value = 0
-        this._cwGain.connect(this._lpf)
-
-        this._oscillator = this._ctx.createOscillator()
-        this._oscillator.type = 'sine'
-        this._oscillator.frequency.setValueAtTime(freq, this._ctx.currentTime)
-        this._oscillator.connect(this._cwGain)
         //        this._oscillator.start()
         this._started = false
-        this._wpm = Number(wpm);
+        this._wpm = Number(wpm)
+        this._freq = Number(freq)
         this._ditLen = this._ditLength(this._wpm * 5)
 
         this._ditKey = UP
@@ -480,7 +461,31 @@ class MorseKeyer {
     }
 
     start() {
-        if (this._started === false) {
+        if (this._started === false) {            
+
+            this._ctx = new (window.AudioContext || window.webkitAudioContext)() // web audio context
+
+            this._gain = this._ctx.createGain()
+            this._gain.connect(this._ctx.destination)
+            //        const clip_vol = 1.8 * Math.exp(-0.115 * 12 )
+            this._gain.gain.value = 0.5 * 0.5 * 0.6
+    
+            this._lpf = this._ctx.createBiquadFilter()
+            this._lpf.type = "lowpass"
+
+            this._lpf.frequency.setValueAtTime(this._freq, this._ctx.currentTime)
+            this._lpf.Q.setValueAtTime(12, this._ctx.currentTime)
+            this._lpf.connect(this._gain)
+    
+            this._cwGain = this._ctx.createGain()
+            this._cwGain.gain.value = 0
+            this._cwGain.connect(this._lpf)
+    
+            this._oscillator = this._ctx.createOscillator()
+            this._oscillator.type = 'sine'
+            this._oscillator.frequency.setValueAtTime(this._freq, this._ctx.currentTime)
+            this._oscillator.connect(this._cwGain)
+
             this._oscillator.start()
             this._started = true;
         }
@@ -559,8 +564,6 @@ class MorseKeyer {
 
 // focus text box on load
 window.onload = function () {
-    let audioCtx = new (window.AudioContext || window.webkitAudioContext)()
-
 
 // store settings in local storage
 
@@ -584,12 +587,17 @@ window.onload = function () {
         document.getElementById("freq").value = setting.freq
     }
     let wpm = parseInt(document.getElementById("wpm").value)
-    let freq = parseInt(document.getElementById("freq").value)    
-    let morseKeyer = new MorseKeyer(audioCtx, wpm, freq);
+    let freq = parseInt(document.getElementById("freq").value)   
+    
+
+    let morseKeyer = new MorseKeyer(wpm, freq)
 
 
 
     window.onkeydown = function (e) {
+
+        
+
         if (keyAllowed[e.code] === false) return;
         keyAllowed[e.code] = false;
         console.log(e)
@@ -602,8 +610,6 @@ window.onload = function () {
         }
     }
     window.onkeyup = function (e) {
-
-
         keyAllowed[e.code] = true;
         if (e.code == "ShiftLeft" || e.code === "ControlLeft") {
             morseKeyer.keyup(DIT)
