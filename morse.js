@@ -447,19 +447,19 @@ class MorseKeyer {
     playDitElement() {
         console.log("dit")
         this._lastElement = DIT
-        this._cwGain.gain.setValueAtTime(1, this._ctx.currentTime )
+        this._cwGain.gain.setValueAtTime(1, this._ctx.currentTime)
         this._cwGain.gain.setValueAtTime(0, this._ctx.currentTime + this._ditLen)
     }
 
     playDahElement() {
         console.log("dah")
         this._lastElement = DAH
-        this._cwGain.gain.setValueAtTime(1, this._ctx.currentTime )
+        this._cwGain.gain.setValueAtTime(1, this._ctx.currentTime)
         this._cwGain.gain.setValueAtTime(0, this._ctx.currentTime + 3 * this._ditLen)
     }
 
     start() {
-        if (this._started === false) {            
+        if (this._started === false) {
 
             this._ctx = new (window.AudioContext || window.webkitAudioContext)() // web audio context
 
@@ -467,18 +467,18 @@ class MorseKeyer {
             this._gain.connect(this._ctx.destination)
             //        const clip_vol = 1.8 * Math.exp(-0.115 * 12 )
             this._gain.gain.value = 0.5 * 0.5 * 0.6
-    
+
             this._lpf = this._ctx.createBiquadFilter()
             this._lpf.type = "lowpass"
 
             this._lpf.frequency.setValueAtTime(this._freq, this._ctx.currentTime)
             this._lpf.Q.setValueAtTime(12, this._ctx.currentTime)
             this._lpf.connect(this._gain)
-    
+
             this._cwGain = this._ctx.createGain()
             this._cwGain.gain.value = 0
             this._cwGain.connect(this._lpf)
-    
+
             this._oscillator = this._ctx.createOscillator()
             this._oscillator.type = 'sine'
             this._oscillator.frequency.setValueAtTime(this._freq, this._ctx.currentTime)
@@ -537,7 +537,6 @@ class MorseKeyer {
 
 
     keydown(key) {
-        console.log("down")
         this.start()
         if (key === DAH && this._dahKey === UP) {
             this._dahKey = DOWN
@@ -563,17 +562,17 @@ class MorseKeyer {
 // focus text box on load
 window.onload = function () {
 
-// store settings in local storage
+    // store settings in local storage
 
-    const storeSetting =  function (e) {
+    const storeSetting = function (e) {
         localStorage.setItem("setting", JSON.stringify(
             {
                 wpm: document.getElementById("wpm").value,
                 freq: document.getElementById("freq").value
             }
         ));
-    }   
-    document.getElementById("freq").onchange  = storeSetting 
+    }
+    document.getElementById("freq").onchange = storeSetting
     document.getElementById("wpm").onchange = storeSetting
 
     //    const out = document.getElementById("out");  
@@ -585,26 +584,33 @@ window.onload = function () {
         document.getElementById("freq").value = setting.freq
     }
     let wpm = parseInt(document.getElementById("wpm").value)
-    let freq = parseInt(document.getElementById("freq").value)   
-    
+    let freq = parseInt(document.getElementById("freq").value)
+
 
     let morseKeyer = new MorseKeyer(wpm, freq)
 
     window.onkeydown = function (e) {
+        // https://stackoverflow.com/questions/7944460/detect-safari-browser
+        // Problem in Safari: it return 2nd key down event if both ctrl key pressed instead of keyup
+        var isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent)
 
-        if (keyAllowed[e.code] === false) return;
-        keyAllowed[e.code] = false;
-        console.log(e)
-        console.log("OK")
-        if (e.code === "ShiftLeft" || e.code === "ControlLeft" || e.code === "Period" ) {
-            morseKeyer.keydown(DIT)
+
+        if (!isSafari && keyAllowed[e.code] === false) return;
+        keyAllowed[e.code] = false
+        console.log("down " + e.code)
+        if (e.code === "ShiftLeft" || e.code === "ControlLeft" || e.code === "Period") {
+            if (isSafari && morseKeyer._ditKey === DOWN ) morseKeyer.keyup(DIT); 
+            else morseKeyer.keydown(DIT)
         }
-        if (e.code === "ShiftRight" || e.code === "ControlRight" || e.code === "Slash" ) {
-            morseKeyer.keydown(DAH)
+        if (e.code === "ShiftRight" || e.code === "ControlRight" || e.code === "Slash") {
+            if (isSafari && morseKeyer._ditKey === DOWN ) morseKeyer.keyup(DAH); 
+            else morseKeyer.keydown(DAH)            
+//            morseKeyer.keydown(DAH)
         }
     }
     window.onkeyup = function (e) {
         keyAllowed[e.code] = true;
+        console.log("up " + e.code)
         if (e.code == "ShiftLeft" || e.code === "ControlLeft" || e.code === "Period") {
             morseKeyer.keyup(DIT)
         }
