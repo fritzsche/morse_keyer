@@ -590,11 +590,19 @@ window.onload = function () {
 
     let morseKeyer = new MorseKeyer(wpm, freq)
 
+    document.getElementById("freq_value").textContent = document.getElementById("freq").value
+    document.getElementById("freq").addEventListener("input", (event) => {
+        document.getElementById("freq_value").textContent = event.target.value;
+      });
+
+
+      document.getElementById("wpm_value").textContent = document.getElementById("wpm").value
+      document.getElementById("wpm").addEventListener("input", (event) => {
+          document.getElementById("wpm_value").textContent = event.target.value;
+        });      
+
     window.onkeydown = function (e) {
-
         // Problem in Safari: it return 2nd key down event if both ctrl key pressed instead of keyup
-
-
         // this prevents multiple keydowns on windows 
         if (!isSafari && keyAllowed[e.code] === false) return;
         keyAllowed[e.code] = false

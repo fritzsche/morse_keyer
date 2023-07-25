@@ -18,12 +18,12 @@
   <h2>Settings</h2>
   <p>
     <label for="wpm"> WPM </label>
-    <input id="wpm" type="number" min="5" max="40" step="1" value="20">
-  </p>
+    <input id="wpm" type="range" min="5" max="40" step="1" value="20">
+  </p><span class="value" id="wpm_value"></span>
   <p>
     <label for="freq"> Frequency </label>
-    <input id="freq" type="number" min="500" max="900" step="10" value="650">
-  </p>
+    <input id="freq" type="range" min="500" max="900" step="10" value="650"> </input> 
+  </p><span class="value" id="freq_value"></span><span class="value">Hz</span>
   <script src="morse.js"></script>
 </body>
 

@@ -81,6 +81,18 @@ input, textarea {
   padding: 2px;
   width: 150px;
 }
+
+#value {
+  float: left;
+  padding-left: 3px;
+}
+
+.value {
+  float: left;
+  padding-left: 3px;
+}
+
+
 #out {
   width:100%; 
   height: 3em;
