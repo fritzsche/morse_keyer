@@ -561,7 +561,8 @@ class MorseKeyer {
 
 // focus text box on load
 window.onload = function () {
-
+    // https://stackoverflow.com/questions/7944460/detect-safari-browser    
+    var isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent)
     // store settings in local storage
 
     const storeSetting = function (e) {
@@ -590,9 +591,9 @@ window.onload = function () {
     let morseKeyer = new MorseKeyer(wpm, freq)
 
     window.onkeydown = function (e) {
-        // https://stackoverflow.com/questions/7944460/detect-safari-browser
+
         // Problem in Safari: it return 2nd key down event if both ctrl key pressed instead of keyup
-        var isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent)
+
 
         // this prevents multiple keydowns on windows 
         if (!isSafari && keyAllowed[e.code] === false) return;
