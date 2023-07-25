@@ -603,7 +603,7 @@ window.onload = function () {
             else morseKeyer.keydown(DIT)
         }
         if (e.code === "ShiftRight" || e.code === "ControlRight" || e.code === "Slash") {
-            if (isSafari && morseKeyer._ditKey === DOWN ) morseKeyer.keyup(DAH); 
+            if (isSafari && morseKeyer._dahKey === DOWN ) morseKeyer.keyup(DAH); 
             else morseKeyer.keydown(DAH)            
         }
     }
