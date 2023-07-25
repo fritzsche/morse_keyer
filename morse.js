@@ -411,12 +411,13 @@ const UP = 2
 
 
 class MorseKeyer {
-    constructor(wpm = 25, freq = 600) {
+    constructor(volume = 100, wpm = 25, freq = 600) {
 
         //        this._oscillator.start()
         this._started = false
         this._wpm = Number(wpm)
         this._freq = Number(freq)
+        this._volume = Number(volume)
         this._ditLen = this._ditLength(this._wpm * 5)
 
         this._ditKey = UP
@@ -466,7 +467,7 @@ class MorseKeyer {
             this._gain = this._ctx.createGain()
             this._gain.connect(this._ctx.destination)
             //        const clip_vol = 1.8 * Math.exp(-0.115 * 12 )
-            this._gain.gain.value = 0.5 * 0.5 * 0.6
+            this._gain.gain.value = 0.5 * 0.5 * 0.6 * (this._volume / 100)
 
             this._lpf = this._ctx.createBiquadFilter()
             this._lpf.type = "lowpass"
@@ -568,11 +569,14 @@ window.onload = function () {
     const storeSetting = function (e) {
         localStorage.setItem("setting", JSON.stringify(
             {
+                vol: document.getElementById("vol").value,
                 wpm: document.getElementById("wpm").value,
                 freq: document.getElementById("freq").value
             }
         ));
     }
+
+    document.getElementById("vol").onchange = storeSetting
     document.getElementById("freq").onchange = storeSetting
     document.getElementById("wpm").onchange = storeSetting
 
@@ -581,14 +585,17 @@ window.onload = function () {
 
     let setting = JSON.parse(localStorage.getItem("setting"));
     if (setting) {
+        document.getElementById("vol").value = setting.vol
         document.getElementById("wpm").value = setting.wpm
         document.getElementById("freq").value = setting.freq
     }
+
+    let vol = parseInt(document.getElementById("vol").value)    
     let wpm = parseInt(document.getElementById("wpm").value)
     let freq = parseInt(document.getElementById("freq").value)
 
 
-    let morseKeyer = new MorseKeyer(wpm, freq)
+    let morseKeyer = new MorseKeyer(vol,wpm, freq)
 
     document.getElementById("freq_value").textContent = document.getElementById("freq").value
     document.getElementById("freq").addEventListener("input", (event) => {
@@ -627,9 +634,3 @@ window.onload = function () {
         }
     }
 }
-
-
-
-
-
-
