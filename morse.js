@@ -459,15 +459,37 @@ class MorseKeyer {
         this._cwGain.gain.setValueAtTime(0, this._ctx.currentTime + 3 * this._ditLen)
     }
 
+    set volume(vol = 50) {
+        this.start()
+        this._volume = vol
+        let v = 0.5 * 0.5 * 0.6 * (this._volume / 100)
+        console.log("WRITE VOL"+v)
+ //       debugger;
+        this._gain.gain.setValueAtTime( v , this._ctx.currentTime)
+
+    }
+
+    set wpm(wpm = 50) {
+        this._wpm = wpm
+        this._ditLen = this._ditLength(this._wpm * 5)        
+    }
+
+    set frequency(freq = 650) {
+        this.start()
+        this._freq = freq
+        this._oscillator.frequency.setValueAtTime(this._freq, this._ctx.currentTime)       
+    }    
+
     start() {
         if (this._started === false) {
-
+            this._started = true;
             this._ctx = new (window.AudioContext || window.webkitAudioContext)() // web audio context
 
             this._gain = this._ctx.createGain()
             this._gain.connect(this._ctx.destination)
             //        const clip_vol = 1.8 * Math.exp(-0.115 * 12 )
-            this._gain.gain.value = 0.5 * 0.5 * 0.6 * (this._volume / 100)
+            this.volume = this._volume 
+//            this._gain.gain.value = 0.5 * 0.5 * 0.6 * (this._volume / 100)
 
             this._lpf = this._ctx.createBiquadFilter()
             this._lpf.type = "lowpass"
@@ -486,7 +508,7 @@ class MorseKeyer {
             this._oscillator.connect(this._cwGain)
 
             this._oscillator.start()
-            this._started = true;
+            
         }
     }
 
@@ -564,24 +586,12 @@ class MorseKeyer {
 window.onload = function () {
     // https://stackoverflow.com/questions/7944460/detect-safari-browser    
     var isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent)
-    // store settings in local storage
 
-    const storeSetting = function (e) {
-        localStorage.setItem("setting", JSON.stringify(
-            {
-                vol: document.getElementById("vol").value,
-                wpm: document.getElementById("wpm").value,
-                freq: document.getElementById("freq").value
-            }
-        ));
-    }
+    window.focus()
 
-    document.getElementById("vol").onchange = storeSetting
-    document.getElementById("freq").onchange = storeSetting
-    document.getElementById("wpm").onchange = storeSetting
-
-    //    const out = document.getElementById("out");  
     var keyAllowed = {}  // to stop key repeats
+
+    // store settings in local storage
 
     let setting = JSON.parse(localStorage.getItem("setting"));
     if (setting) {
@@ -596,6 +606,24 @@ window.onload = function () {
 
 
     let morseKeyer = new MorseKeyer(vol,wpm, freq)
+
+    const storeSetting = function (e) {
+        let config = {
+            vol: document.getElementById("vol").value,
+            wpm: document.getElementById("wpm").value,
+            freq: document.getElementById("freq").value
+        }
+        console.log("conf write")
+        morseKeyer.volume = config.vol
+        morseKeyer.wpm = config.wpm
+        morseKeyer.frequency = config.freq
+        localStorage.setItem("setting", JSON.stringify( config ))
+    }
+
+    document.getElementById("vol").onchange = storeSetting
+    document.getElementById("freq").onchange = storeSetting
+    document.getElementById("wpm").onchange = storeSetting
+
 
     document.getElementById("freq_value").textContent = document.getElementById("freq").value
     document.getElementById("freq").addEventListener("input", (event) => {
