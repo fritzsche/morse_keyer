@@ -462,23 +462,26 @@ class MorseKeyer {
     set volume(vol = 50) {
         this.start()
         this._volume = vol
-        let v = 0.5 * 0.5 * 0.6 * (this._volume / 100)
-        console.log("WRITE VOL"+v)
- //       debugger;
-        this._gain.gain.setValueAtTime( v , this._ctx.currentTime)
+        console.log("volume "+this._volume)
+        let v = Math.exp( Math.pow( this._volume  / 100 , 3 ) )
+        console.log("WRITE VOL " + v)
+        //       debugger;
+      
+        this._totalGain.gain.exponentialRampToValueAtTime(v, this._ctx.currentTime + 0.03)
 
     }
 
     set wpm(wpm = 50) {
         this._wpm = wpm
-        this._ditLen = this._ditLength(this._wpm * 5)        
+        this._ditLen = this._ditLength(this._wpm * 5)
     }
 
     set frequency(freq = 650) {
         this.start()
         this._freq = freq
-        this._oscillator.frequency.setValueAtTime(this._freq, this._ctx.currentTime)       
-    }    
+        this._oscillator.frequency.setValueAtTime(this._freq, this._ctx.currentTime)
+        this._lpf.frequency.setValueAtTime(this._freq, this._ctx.currentTime)
+    }
 
     start() {
         if (this._started === false) {
@@ -488,8 +491,8 @@ class MorseKeyer {
             this._gain = this._ctx.createGain()
             this._gain.connect(this._ctx.destination)
             //        const clip_vol = 1.8 * Math.exp(-0.115 * 12 )
-            this.volume = this._volume 
-//            this._gain.gain.value = 0.5 * 0.5 * 0.6 * (this._volume / 100)
+
+            this._gain.gain.value = 0.5 * 0.5 * 0.6 // * (this._volume / 100)
 
             this._lpf = this._ctx.createBiquadFilter()
             this._lpf.type = "lowpass"
@@ -502,13 +505,19 @@ class MorseKeyer {
             this._cwGain.gain.value = 0
             this._cwGain.connect(this._lpf)
 
+            this._totalGain = this._ctx.createGain()
+            this._totalGain.gain.value = 1
+            this._totalGain.connect(this._cwGain)
+
+            this.volume = this._volume
+
             this._oscillator = this._ctx.createOscillator()
             this._oscillator.type = 'sine'
             this._oscillator.frequency.setValueAtTime(this._freq, this._ctx.currentTime)
-            this._oscillator.connect(this._cwGain)
+            this._oscillator.connect(this._totalGain)
 
             this._oscillator.start()
-            
+
         }
     }
 
@@ -600,12 +609,12 @@ window.onload = function () {
         document.getElementById("freq").value = setting.freq
     }
 
-    let vol = parseInt(document.getElementById("vol").value)    
+    let vol = parseInt(document.getElementById("vol").value)
     let wpm = parseInt(document.getElementById("wpm").value)
     let freq = parseInt(document.getElementById("freq").value)
 
 
-    let morseKeyer = new MorseKeyer(vol,wpm, freq)
+    let morseKeyer = new MorseKeyer(vol, wpm, freq)
 
     const storeSetting = function (e) {
         let config = {
@@ -617,7 +626,7 @@ window.onload = function () {
         morseKeyer.volume = config.vol
         morseKeyer.wpm = config.wpm
         morseKeyer.frequency = config.freq
-        localStorage.setItem("setting", JSON.stringify( config ))
+        localStorage.setItem("setting", JSON.stringify(config))
     }
 
     document.getElementById("vol").onchange = storeSetting
@@ -628,13 +637,13 @@ window.onload = function () {
     document.getElementById("freq_value").textContent = document.getElementById("freq").value
     document.getElementById("freq").addEventListener("input", (event) => {
         document.getElementById("freq_value").textContent = event.target.value;
-      });
+    });
 
 
-      document.getElementById("wpm_value").textContent = document.getElementById("wpm").value
-      document.getElementById("wpm").addEventListener("input", (event) => {
-          document.getElementById("wpm_value").textContent = event.target.value;
-        });      
+    document.getElementById("wpm_value").textContent = document.getElementById("wpm").value
+    document.getElementById("wpm").addEventListener("input", (event) => {
+        document.getElementById("wpm_value").textContent = event.target.value;
+    });
 
     window.onkeydown = function (e) {
         // Problem in Safari: it return 2nd key down event if both ctrl key pressed instead of keyup
@@ -643,12 +652,12 @@ window.onload = function () {
         keyAllowed[e.code] = false
         console.log("down " + e.code)
         if (e.code === "ShiftLeft" || e.code === "ControlLeft" || e.code === "Period") {
-            if (isSafari && morseKeyer._ditKey === DOWN ) morseKeyer.keyup(DIT); 
+            if (isSafari && morseKeyer._ditKey === DOWN) morseKeyer.keyup(DIT);
             else morseKeyer.keydown(DIT)
         }
         if (e.code === "ShiftRight" || e.code === "ControlRight" || e.code === "Slash") {
-            if (isSafari && morseKeyer._dahKey === DOWN ) morseKeyer.keyup(DAH); 
-            else morseKeyer.keydown(DAH)            
+            if (isSafari && morseKeyer._dahKey === DOWN) morseKeyer.keyup(DAH);
+            else morseKeyer.keydown(DAH)
         }
     }
     window.onkeyup = function (e) {
