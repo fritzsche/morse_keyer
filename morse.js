@@ -410,6 +410,58 @@ const DOWN = 1
 const UP = 2
 
 
+const morse_map = {
+// alpha
+    '.-': 'a',
+    '-...': 'b',
+    '-.-.': 'c',
+    '-..': 'd',
+    '.': 'e',
+    '..-.': 'f',
+    '--.': 'g',
+    '....': 'h',
+    '..': 'i',
+    '.---': 'j',
+    '-.-': 'k',
+    '.-..': 'l',
+    '--': 'm',
+    '-.': 'n',
+    '---': 'o',
+    '.--.': 'p',
+    '--.-': 'q',
+    '.-.': 'r',
+    '...': 's',
+    '-': 't',
+    '..-': 'u',
+    '...-': 'v',
+    '.--': 'w',
+    '-..-': 'x',
+    '-.--': 'y',
+    '--..': 'z',
+ // numbers   
+    '.----': '1',
+    '..---': '2',
+    '...--': '3',
+    '....-': '4',
+    '.....': '5',
+    '-....': '6',
+    '--...': '7',
+    '---..': '8',
+    '----.': '9',
+    '-----': '0',
+ // punctuation   
+    '--..--': ',',
+    '..--..': '?',
+    '.-.-.-': '.',
+// Deutsche Umlaute
+    '.--.-': 'ä',
+    '---.': 'ö',
+    '..--': 'ü',
+    '...--..': 'ß',
+    '-.-.--': '!'        
+}
+
+
 class MorseKeyer {
     constructor(volume = 100, wpm = 25, freq = 600) {
 
@@ -420,12 +472,13 @@ class MorseKeyer {
         this._volume = Number(volume)
         this._ditLen = this._ditLength(this._wpm * 5)
 
-        this._ditKey = UP
+        this._ditKey = UP 
         this._dahKey = UP
         this._memory = NONE
         this._iambic = false
         this._ticking = false
         this._lastElement = NONE
+        this._currentElement = ""
     }
 
 
@@ -445,15 +498,37 @@ class MorseKeyer {
         return cpmDitSpeed / cpm;
     }
 
+    appendElement(e) {
+   //    let delta = 0 
+   //    let now = (new Date()).getTime()
+   //    if (this._currentElement.length > 0) delta = Math.abs( now - this._lastTime )
+
+//       console.log("n "+now)
+//       console.log("l "+this._lastDate)
+//       this._lastTime = now
+
+
+        
+       this._currentElement += e
+       
+ //      console.log("Element: "+this._currentElement)
+ //      console.log("dit "+this._ditLen)
+ //      console.log("delta "+delta)
+    }
+
     playDitElement() {
         console.log("dit")
+        this.appendElement(".")        
         this._lastElement = DIT
         this._cwGain.gain.setValueAtTime(1, this._ctx.currentTime)
         this._cwGain.gain.setValueAtTime(0, this._ctx.currentTime + this._ditLen)
     }
 
+
+
     playDahElement() {
         console.log("dah")
+        this.appendElement("-")
         this._lastElement = DAH
         this._cwGain.gain.setValueAtTime(1, this._ctx.currentTime)
         this._cwGain.gain.setValueAtTime(0, this._ctx.currentTime + 3 * this._ditLen)
@@ -565,6 +640,10 @@ class MorseKeyer {
         }
         // stop if no element was played
         this._ticking = false
+        
+        if (morse_map[this._currentElement]) console.log("OUT: "+ morse_map[this._currentElement] );
+        else console.log("*")
+        this._currentElement = ""
     }
 
 
