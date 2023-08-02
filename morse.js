@@ -453,6 +453,7 @@ const morse_map = {
     '--..--': ',',
     '..--..': '?',
     '.-.-.-': '.',
+    '-...-': '=',
 // Deutsche Umlaute
     '.--.-': 'ä',
     '---.': 'ö',
@@ -463,7 +464,7 @@ const morse_map = {
 
 
 class MorseKeyer {
-    constructor(volume = 100, wpm = 25, freq = 600) {
+    constructor(volume = 100, wpm = 25, freq = 600,callback) {
 
         //        this._oscillator.start()
         this._started = false
@@ -479,6 +480,8 @@ class MorseKeyer {
         this._ticking = false
         this._lastElement = NONE
         this._currentElement = ""
+        this._displayCallback = displayCallback
+        this._lastTime = 0
     }
 
 
@@ -498,22 +501,16 @@ class MorseKeyer {
         return cpmDitSpeed / cpm;
     }
 
+    displayLetter(l) {
+        if ( this._displayCallback ) this._displayCallback(l)  
+    }
+
     appendElement(e) {
-   //    let delta = 0 
-   //    let now = (new Date()).getTime()
-   //    if (this._currentElement.length > 0) delta = Math.abs( now - this._lastTime )
-
-//       console.log("n "+now)
-//       console.log("l "+this._lastDate)
-//       this._lastTime = now
-
-
-        
+       let delta = 0 
+       let now = (new Date()).getTime()
+       if (this._lastTime > 0 && this._currentElement === "") delta = Math.abs( now - this._lastTime )
+       if ( delta  > 6 * this._ditLen * 1000 ) this.displayLetter(' ')
        this._currentElement += e
-       
- //      console.log("Element: "+this._currentElement)
- //      console.log("dit "+this._ditLen)
- //      console.log("delta "+delta)
     }
 
     playDitElement() {
@@ -640,9 +637,11 @@ class MorseKeyer {
         }
         // stop if no element was played
         this._ticking = false
-        
-        if (morse_map[this._currentElement]) console.log("OUT: "+ morse_map[this._currentElement] );
-        else console.log("*")
+        // identify letter
+        this._lastTime = ( new Date()).getTime()        
+        if (morse_map[this._currentElement]) 
+            this.displayLetter( morse_map[this._currentElement] );
+        else this.displayLetter('*')
         this._currentElement = ""
     }
 
@@ -692,8 +691,13 @@ window.onload = function () {
     let wpm = parseInt(document.getElementById("wpm").value)
     let freq = parseInt(document.getElementById("freq").value)
 
+    const out = document.getElementById("out")
+    const callBack = displayCallback = (text) => {
+        out.textContent += text;
+        out.scrollTop = out.scrollHeight;
+    }
 
-    let morseKeyer = new MorseKeyer(vol, wpm, freq)
+    let morseKeyer = new MorseKeyer(vol, wpm, freq,callBack)
 
     const storeSetting = function (e) {
         let config = {
@@ -711,7 +715,6 @@ window.onload = function () {
     document.getElementById("vol").onchange = storeSetting
     document.getElementById("freq").onchange = storeSetting
     document.getElementById("wpm").onchange = storeSetting
-
 
     document.getElementById("freq_value").textContent = document.getElementById("freq").value
     document.getElementById("freq").addEventListener("input", (event) => {
