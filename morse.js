@@ -465,7 +465,11 @@ const morse_map = {
     '---.': 'ö',
     '..--': 'ü',
     '...--..': 'ß',
-    '-.-.--': '!'
+    '-.-.--': '!',
+    '-.-.-': '<ka>', // Message begins / Start of work 
+    '...-.-': '<sk>', //  End of contact / End of work
+    '.-.-.':'<ar>', // End of transmission / End of message
+    '-.--.':'<kn>' // Go ahead, specific named station.    
 }
 
 
@@ -522,10 +526,14 @@ class MorseKeyer {
     }
 
     _appendElement(e) {
+        // to detect we need to output a space (intra word distance) 
+        // we check to see at least 6 dits since the last character end. 
+        // Detail are 7 dit length but 6 is for more tolerance        
         let delta = 0
         let now = (new Date()).getTime()
         if (this._lastTime > 0 && this._currentLetter === "") delta = Math.abs(now - this._lastTime)
-        if (delta > 4 * this._ditLen * 1000) this._displayLetter(' ')
+        if (delta > 6 * this._ditLen * 1000) this._displayLetter(' ')
+        // append element to build letters
         this._currentLetter += e
     }
 
