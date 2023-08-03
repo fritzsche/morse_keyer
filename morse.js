@@ -465,21 +465,34 @@ const morse_map = {
 
 class MorseKeyer {
     constructor(volume = 100, wpm = 25, freq = 600,callback) {
-
-        //        this._oscillator.start()
         this._started = false
         this._wpm = Number(wpm)
         this._freq = Number(freq)
         this._volume = Number(volume)
         this._ditLen = this._ditLength(this._wpm * 5)
-
+    
+        // set if dit/dah-key's pressed
         this._ditKey = UP 
         this._dahKey = UP
+
+
         this._memory = NONE
+
+        // memory a pressed dit key while dah key is pressed
+        this._ditMemory = false
+        // memory a pressed dah key while dit key is pressed
+        this.dahMemory = false
+
+        // set true while both paddels are pressed
         this._iambic = false
+
+        // active while keys are pressed and memory is processed (main loop)
         this._ticking = false
+
+        // the last element executed (e.g. to issue alternating elements on iambic action)
         this._lastElement = NONE
-        this._currentElement = ""
+        // elements of the current letter are stored here
+        this._currentLetter = ""
         this._displayCallback = displayCallback
         this._lastTime = 0
     }
@@ -508,9 +521,9 @@ class MorseKeyer {
     appendElement(e) {
        let delta = 0 
        let now = (new Date()).getTime()
-       if (this._lastTime > 0 && this._currentElement === "") delta = Math.abs( now - this._lastTime )
+       if (this._lastTime > 0 && this._currentLetter === "") delta = Math.abs( now - this._lastTime )
        if ( delta  > 6 * this._ditLen * 1000 ) this.displayLetter(' ')
-       this._currentElement += e
+       this._currentLetter += e
     }
 
     playElement(e) {
@@ -589,19 +602,21 @@ class MorseKeyer {
     tick() {
         // called at begin of each tick        
         this._ticking = true
-        // check memory        
-        if (this._memory === DIT) {
+        // check dit memory 
+        if (this._memory === DIT && this._lastElement === DAH) {
             // delete memory
             this._memory = NONE
             this.playElement(DIT)
             return
         }
-        if (this._memory === DAH) {
+        // check dah memory
+        if (this._memory === DAH && this._lastElement === DIT) {
             // delete memory
             this._memory = NONE
               this.playElement(DAH)
             return
         }
+        // check if iambic action is ongoing
         if (this._iambic) {
             console.log("iambic" + this._lastElement)
             if (this._lastElement === DIT) {
@@ -626,23 +641,26 @@ class MorseKeyer {
         this._ticking = false
         // identify letter
         this._lastTime = ( new Date()).getTime()        
-        if (morse_map[this._currentElement]) 
-            this.displayLetter( morse_map[this._currentElement] );
+        if (morse_map[this._currentLetter]) 
+            this.displayLetter( morse_map[this._currentLetter] );
         else this.displayLetter('*')
-        this._currentElement = ""
+        this._currentLetter = ""
     }
 
 
     keydown(key) {
         this.start()
+        // only DAH key
         if (key === DAH && this._dahKey === UP) {
             this._dahKey = DOWN
             if (this._ticking) this._memory = DAH
         }
+        // only dit
         else if (key === DIT && this._ditKey === UP) {
             this._ditKey = DOWN
             if (this._ticking) this._memory = DIT
         }
+        // both keys
         if (this._ditKey === DOWN && this._dahKey === DOWN) this._iambic = true
 
         if (!this._ticking) this.tick()
