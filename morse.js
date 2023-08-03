@@ -475,9 +475,6 @@ class MorseKeyer {
         this._ditKey = UP 
         this._dahKey = UP
 
-
-        this._memory = NONE
-
         // memory a pressed dit key while dah key is pressed
         this._ditMemory = false
         // memory a pressed dah key while dit key is pressed
@@ -514,21 +511,21 @@ class MorseKeyer {
         return cpmDitSpeed / cpm;
     }
 
-    displayLetter(l) {
+    _displayLetter(l) {
         if ( this._displayCallback ) this._displayCallback(l)  
     }
 
-    appendElement(e) {
+    _appendElement(e) {
        let delta = 0 
        let now = (new Date()).getTime()
        if (this._lastTime > 0 && this._currentLetter === "") delta = Math.abs( now - this._lastTime )
-       if ( delta  > 6 * this._ditLen * 1000 ) this.displayLetter(' ')
+       if ( delta  > 4 * this._ditLen * 1000 ) this._displayLetter(' ')
        this._currentLetter += e
     }
 
     playElement(e) {
         console.log("Element: "+e)
-        this.appendElement(e)
+        this._appendElement(e)
         this._lastElement = e
         this._cwGain.gain.setValueAtTime(1, this._ctx.currentTime)
         if (e === DIT) {
@@ -544,7 +541,7 @@ class MorseKeyer {
         this.start()
         this._volume = vol
         console.log("volume "+this._volume)
-        let v = Math.exp( Math.pow( this._volume  / 100 , 3 ) )
+        let v =  Math.pow( this._volume  / 100 , 3 )  ////Math.exp( this._volume )
         console.log("WRITE VOL " + v)
       
         this._totalGain.gain.exponentialRampToValueAtTime(v, this._ctx.currentTime + 0.03)
@@ -564,7 +561,7 @@ class MorseKeyer {
 
     start() {
         if (this._started === false) {
-            this._started = true;
+            this._started = true
             this._ctx = new (window.AudioContext || window.webkitAudioContext)() // web audio context
 
             this._gain = this._ctx.createGain()
@@ -603,16 +600,18 @@ class MorseKeyer {
         // called at begin of each tick        
         this._ticking = true
         // check dit memory 
-        if (this._memory === DIT && this._lastElement === DAH) {
+        if (this._ditMemory && this._lastElement === DAH) {
             // delete memory
-            this._memory = NONE
+            console.log("Dit Memory")
+            this._ditMemory = false
             this.playElement(DIT)
             return
         }
         // check dah memory
-        if (this._memory === DAH && this._lastElement === DIT) {
+        if (this._dahMemory && this._lastElement === DIT) {
             // delete memory
-            this._memory = NONE
+            console.log("Dah Memory")
+            this._dahMemory = false
               this.playElement(DAH)
             return
         }
@@ -642,8 +641,8 @@ class MorseKeyer {
         // identify letter
         this._lastTime = ( new Date()).getTime()        
         if (morse_map[this._currentLetter]) 
-            this.displayLetter( morse_map[this._currentLetter] );
-        else this.displayLetter('*')
+            this._displayLetter( morse_map[this._currentLetter] );
+        else this._displayLetter('*')
         this._currentLetter = ""
     }
 
@@ -653,12 +652,18 @@ class MorseKeyer {
         // only DAH key
         if (key === DAH && this._dahKey === UP) {
             this._dahKey = DOWN
-            if (this._ticking) this._memory = DAH
+            if (this._ticking) {
+                console.log("set dah Memory")
+                this._dahMemory = true
+            }    
         }
         // only dit
         else if (key === DIT && this._ditKey === UP) {
             this._ditKey = DOWN
-            if (this._ticking) this._memory = DIT
+            if (this._ticking) {
+                console.log("set dit Memory")
+                this._ditMemory = true
+            }    
         }
         // both keys
         if (this._ditKey === DOWN && this._dahKey === DOWN) this._iambic = true
