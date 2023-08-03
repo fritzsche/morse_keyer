@@ -1,3 +1,9 @@
+/* 
+ * Details about squeeze keying as documented by DJ5IL
+ * http://cq-cq.eu/DJ5IL_rt007.pdf
+ * /
+
+
 const code_map = [
     [/<ka>/, '-.-.-'], // Message begins / Start of work 
     [/<sk>/, '...-.-'], //  End of contact / End of work
@@ -411,7 +417,7 @@ const UP = 2
 
 
 const morse_map = {
-// alpha
+    // alpha
     '.-': 'a',
     '-...': 'b',
     '-.-.': 'c',
@@ -438,7 +444,7 @@ const morse_map = {
     '-..-': 'x',
     '-.--': 'y',
     '--..': 'z',
- // numbers   
+    // numbers   
     '.----': '1',
     '..---': '2',
     '...--': '3',
@@ -449,30 +455,30 @@ const morse_map = {
     '---..': '8',
     '----.': '9',
     '-----': '0',
- // punctuation   
+    // punctuation   
     '--..--': ',',
     '..--..': '?',
     '.-.-.-': '.',
     '-...-': '=',
-// Deutsche Umlaute
+    // Deutsche Umlaute
     '.--.-': 'ä',
     '---.': 'ö',
     '..--': 'ü',
     '...--..': 'ß',
-    '-.-.--': '!'        
+    '-.-.--': '!'
 }
 
 
 class MorseKeyer {
-    constructor(volume = 100, wpm = 25, freq = 600,callback) {
+    constructor(volume = 100, wpm = 25, freq = 600, callback) {
         this._started = false
         this._wpm = Number(wpm)
         this._freq = Number(freq)
         this._volume = Number(volume)
         this._ditLen = this._ditLength(this._wpm * 5)
-    
+
         // set if dit/dah-key's pressed
-        this._ditKey = UP 
+        this._ditKey = UP
         this._dahKey = UP
 
         // memory a pressed dit key while dah key is pressed
@@ -512,38 +518,38 @@ class MorseKeyer {
     }
 
     _displayLetter(l) {
-        if ( this._displayCallback ) this._displayCallback(l)  
+        if (this._displayCallback) this._displayCallback(l)
     }
 
     _appendElement(e) {
-       let delta = 0 
-       let now = (new Date()).getTime()
-       if (this._lastTime > 0 && this._currentLetter === "") delta = Math.abs( now - this._lastTime )
-       if ( delta  > 4 * this._ditLen * 1000 ) this._displayLetter(' ')
-       this._currentLetter += e
+        let delta = 0
+        let now = (new Date()).getTime()
+        if (this._lastTime > 0 && this._currentLetter === "") delta = Math.abs(now - this._lastTime)
+        if (delta > 4 * this._ditLen * 1000) this._displayLetter(' ')
+        this._currentLetter += e
     }
 
     playElement(e) {
-        console.log("Element: "+e)
+        console.log("Element: " + e)
         this._appendElement(e)
         this._lastElement = e
         this._cwGain.gain.setValueAtTime(1, this._ctx.currentTime)
         if (e === DIT) {
             this._cwGain.gain.setValueAtTime(0, this._ctx.currentTime + this._ditLen)
-            setTimeout(() => { this.tick() }, 2 * this._ditLen * 1000)     
+            setTimeout(() => { this.tick() }, 2 * this._ditLen * 1000)
         } else {
             this._cwGain.gain.setValueAtTime(0, this._ctx.currentTime + 3 * this._ditLen)
-            setTimeout(() => { this.tick() }, 4 * this._ditLen * 1000)   
+            setTimeout(() => { this.tick() }, 4 * this._ditLen * 1000)
         }
     }
 
     set volume(vol = 50) {
         this.start()
         this._volume = vol
-        console.log("volume "+this._volume)
-        let v =  Math.pow( this._volume  / 100 , 3 )  ////Math.exp( this._volume )
+        console.log("volume " + this._volume)
+        let v = Math.pow(this._volume / 100, 3)  ////Math.exp( this._volume )
         console.log("WRITE VOL " + v)
-      
+
         this._totalGain.gain.exponentialRampToValueAtTime(v, this._ctx.currentTime + 0.03)
     }
 
@@ -599,6 +605,18 @@ class MorseKeyer {
     tick() {
         // called at begin of each tick        
         this._ticking = true
+
+        // Curtis B
+        // We have played dit and start dah. If Dit memory in not set it will be set
+        if (this._lastElement === DIT && this._iambic && !this._ditMemory) {
+            console.log("IAMBIC B")
+            this._dahMemory = true
+            // We have played a dah and start with did. If Dah memory is not set it will be st
+        } else if (this._lastElement === DAH && this._iambic && !this._dahMemory) {
+            console.log("IAMBIC B")
+            this._ditMemory = true
+        }
+
         // check dit memory 
         if (this._ditMemory && this._lastElement === DAH) {
             // delete memory
@@ -612,12 +630,13 @@ class MorseKeyer {
             // delete memory
             console.log("Dah Memory")
             this._dahMemory = false
-              this.playElement(DAH)
+            this.playElement(DAH)
             return
         }
         // check if iambic action is ongoing
         if (this._iambic) {
             console.log("iambic" + this._lastElement)
+
             if (this._lastElement === DIT) {
                 this.playElement(DAH)
                 return
@@ -639,9 +658,9 @@ class MorseKeyer {
         // stop if no element was played
         this._ticking = false
         // identify letter
-        this._lastTime = ( new Date()).getTime()        
-        if (morse_map[this._currentLetter]) 
-            this._displayLetter( morse_map[this._currentLetter] );
+        this._lastTime = (new Date()).getTime()
+        if (morse_map[this._currentLetter])
+            this._displayLetter(morse_map[this._currentLetter]);
         else this._displayLetter('*')
         this._currentLetter = ""
     }
@@ -655,7 +674,7 @@ class MorseKeyer {
             if (this._ticking) {
                 console.log("set dah Memory")
                 this._dahMemory = true
-            }    
+            }
         }
         // only dit
         else if (key === DIT && this._ditKey === UP) {
@@ -663,7 +682,7 @@ class MorseKeyer {
             if (this._ticking) {
                 console.log("set dit Memory")
                 this._ditMemory = true
-            }    
+            }
         }
         // both keys
         if (this._ditKey === DOWN && this._dahKey === DOWN) this._iambic = true
@@ -707,7 +726,7 @@ window.onload = function () {
         out.scrollTop = out.scrollHeight;
     }
 
-    let morseKeyer = new MorseKeyer(vol, wpm, freq,callBack)
+    let morseKeyer = new MorseKeyer(vol, wpm, freq, callBack)
 
     const storeSetting = function (e) {
         let config = {
