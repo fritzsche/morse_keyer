@@ -713,10 +713,12 @@ window.onload = function () {
 
     window.focus()
 
-    var keyAllowed = {}  // to stop key repeats
+    // to stop key repeats that can happen on windows.
+    // We store all keydowns received and set to false once key up.
+    // so if we get keydow twice we will only recognize it one time.
+    var keyAllowed = {}  
 
-    // store settings in local storage
-
+    // restore settings from local storage
     let setting = JSON.parse(localStorage.getItem("setting"));
     if (setting) {
         document.getElementById("vol").value = setting.vol
@@ -728,6 +730,7 @@ window.onload = function () {
     let wpm = parseInt(document.getElementById("wpm").value)
     let freq = parseInt(document.getElementById("freq").value)
 
+    // define function to update the letters detected
     const out = document.getElementById("out")
     const callBack = displayCallback = (text) => {
         out.textContent += text;
