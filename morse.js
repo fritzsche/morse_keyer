@@ -1,7 +1,7 @@
 /* 
  * Details about squeeze keying as documented by DJ5IL
  * http://cq-cq.eu/DJ5IL_rt007.pdf
- * /
+ */
 
 
 const code_map = [
