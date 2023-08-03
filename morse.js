@@ -401,9 +401,9 @@ class Morse {
     }
 }
 
-const DIT = 1
-const DAH = 2
-const NONE = 3
+const DIT = '.'
+const DAH = '-'
+const NONE = 'X'
 
 
 const DOWN = 1
@@ -513,22 +513,18 @@ class MorseKeyer {
        this._currentElement += e
     }
 
-    playDitElement() {
-        console.log("dit")
-        this.appendElement(".")        
-        this._lastElement = DIT
+    playElement(e) {
+        console.log("Element: "+e)
+        this.appendElement(e)
+        this._lastElement = e
         this._cwGain.gain.setValueAtTime(1, this._ctx.currentTime)
-        this._cwGain.gain.setValueAtTime(0, this._ctx.currentTime + this._ditLen)
-    }
-
-
-
-    playDahElement() {
-        console.log("dah")
-        this.appendElement("-")
-        this._lastElement = DAH
-        this._cwGain.gain.setValueAtTime(1, this._ctx.currentTime)
-        this._cwGain.gain.setValueAtTime(0, this._ctx.currentTime + 3 * this._ditLen)
+        if (e === DIT) {
+            this._cwGain.gain.setValueAtTime(0, this._ctx.currentTime + this._ditLen)
+            setTimeout(() => { this.tick() }, 2 * this._ditLen * 1000)     
+        } else {
+            this._cwGain.gain.setValueAtTime(0, this._ctx.currentTime + 3 * this._ditLen)
+            setTimeout(() => { this.tick() }, 4 * this._ditLen * 1000)   
+        }
     }
 
     set volume(vol = 50) {
@@ -537,10 +533,8 @@ class MorseKeyer {
         console.log("volume "+this._volume)
         let v = Math.exp( Math.pow( this._volume  / 100 , 3 ) )
         console.log("WRITE VOL " + v)
-        //       debugger;
       
         this._totalGain.gain.exponentialRampToValueAtTime(v, this._ctx.currentTime + 0.03)
-
     }
 
     set wpm(wpm = 50) {
@@ -562,7 +556,6 @@ class MorseKeyer {
 
             this._gain = this._ctx.createGain()
             this._gain.connect(this._ctx.destination)
-            //        const clip_vol = 1.8 * Math.exp(-0.115 * 12 )
 
             this._gain.gain.value = 0.5 * 0.5 * 0.6 // * (this._volume / 100)
 
@@ -600,39 +593,33 @@ class MorseKeyer {
         if (this._memory === DIT) {
             // delete memory
             this._memory = NONE
-            this.playDitElement()
-            setTimeout(() => { this.tick() }, 2 * this._ditLen * 1000)
+            this.playElement(DIT)
             return
         }
         if (this._memory === DAH) {
             // delete memory
             this._memory = NONE
-            this.playDahElement()
-            setTimeout(() => { this.tick() }, 4 * this._ditLen * 1000)
+              this.playElement(DAH)
             return
         }
         if (this._iambic) {
             console.log("iambic" + this._lastElement)
             if (this._lastElement === DIT) {
-                this.playDahElement()
-                setTimeout(() => { this.tick() }, 4 * this._ditLen * 1000)
+                this.playElement(DAH)
                 return
             } else {
-                this.playDitElement()
-                setTimeout(() => { this.tick() }, 2 * this._ditLen * 1000)
+                this.playElement(DIT)
                 return
             }
         }
         // check left key
         if (this._ditKey === DOWN && this._dahKey === UP) {
-            this.playDitElement()
-            setTimeout(() => { this.tick() }, 2 * this._ditLen * 1000)
+            this.playElement(DIT)
             return
         }
         // check right key        
         if (this._ditKey === UP && this._dahKey === DOWN) {
-            this.playDahElement()
-            setTimeout(() => { this.tick() }, 4 * this._ditLen * 1000)
+            this.playElement(DAH)
             return
         }
         // stop if no element was played
