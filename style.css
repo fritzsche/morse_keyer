@@ -76,7 +76,7 @@ label{
   text-align: left;
   margin-bottom: 1em;
 }
-input, textarea {
+input, textarea, select {
   float: left;
   padding: 2px;
   width: 150px;

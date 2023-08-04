@@ -468,13 +468,13 @@ const morse_map = {
     '-.-.--': '!',
     '-.-.-': '<ka>', // Message begins / Start of work 
     '...-.-': '<sk>', //  End of contact / End of work
-    '.-.-.':'<ar>', // End of transmission / End of message
-    '-.--.':'<kn>' // Go ahead, specific named station.    
+    '.-.-.': '<ar>', // End of transmission / End of message
+    '-.--.': '<kn>' // Go ahead, specific named station.    
 }
 
 
 class MorseKeyer {
-    constructor(volume = 100, wpm = 25, freq = 600, callback) {
+    constructor(volume = 100, wpm = 25, freq = 600, callback, keyMode) {
         this._started = false
         this._wpm = Number(wpm)
         this._freq = Number(freq)
@@ -502,6 +502,10 @@ class MorseKeyer {
         this._currentLetter = ""
         this._displayCallback = displayCallback
         this._lastTime = 0
+
+        if (key === "CURTIS_A")
+            this, _keyerMode = 'A';
+        else this._keyerMode = 'B'
     }
 
 
@@ -573,6 +577,12 @@ class MorseKeyer {
         this._lpf.frequency.setValueAtTime(this._freq, this._ctx.currentTime)
     }
 
+    set keyer(key = 'CURTIS_B') {
+        if (key === 'CURTIS_B') {
+            this._keyerMode = 'B'
+        } else this._keyerMode = 'A'
+    }
+
     start() {
         if (this._started === false) {
             this._started = true
@@ -613,16 +623,17 @@ class MorseKeyer {
     tick() {
         // called at begin of each tick        
         this._ticking = true
-
-        // Curtis B
-        // We have played dit and start dah. If Dit memory in not set it will be set
-        if (this._lastElement === DIT && this._iambic && !this._ditMemory) {
-            console.log("IAMBIC B")
-            this._dahMemory = true
-            // We have played a dah and start with did. If Dah memory is not set it will be st
-        } else if (this._lastElement === DAH && this._iambic && !this._dahMemory) {
-            console.log("IAMBIC B")
-            this._ditMemory = true
+        if (this._keyerMode === 'B') {
+            // Curtis B
+            // We have played dit and start dah. If Dit memory in not set it will be set
+            if (this._lastElement === DIT && this._iambic && !this._ditMemory) {
+                console.log("IAMBIC B")
+                this._dahMemory = true
+                // We have played a dah and start with did. If Dah memory is not set it will be st
+            } else if (this._lastElement === DAH && this._iambic && !this._dahMemory) {
+                console.log("IAMBIC B")
+                this._ditMemory = true
+            }
         }
 
         // check dit memory 
@@ -716,7 +727,7 @@ window.onload = function () {
     // to stop key repeats that can happen on windows.
     // We store all keydowns received and set to false once key up.
     // so if we get keydow twice we will only recognize it one time.
-    var keyAllowed = {}  
+    var keyAllowed = {}
 
     // restore settings from local storage
     let setting = JSON.parse(localStorage.getItem("setting"));
@@ -724,11 +735,13 @@ window.onload = function () {
         document.getElementById("vol").value = setting.vol
         document.getElementById("wpm").value = setting.wpm
         document.getElementById("freq").value = setting.freq
+        document.getElementById("key").value = setting.key
     }
 
     let vol = parseInt(document.getElementById("vol").value)
     let wpm = parseInt(document.getElementById("wpm").value)
     let freq = parseInt(document.getElementById("freq").value)
+    let key = document.getElementById("key").value
 
     // define function to update the letters detected
     const out = document.getElementById("out")
@@ -737,24 +750,27 @@ window.onload = function () {
         out.scrollTop = out.scrollHeight;
     }
 
-    let morseKeyer = new MorseKeyer(vol, wpm, freq, callBack)
+    let morseKeyer = new MorseKeyer(vol, wpm, freq, callBack, key)
 
     const storeSetting = function (e) {
         let config = {
             vol: document.getElementById("vol").value,
             wpm: document.getElementById("wpm").value,
-            freq: document.getElementById("freq").value
+            freq: document.getElementById("freq").value,
+            key: document.getElementById("key").value,
         }
         console.log("conf write")
         morseKeyer.volume = config.vol
         morseKeyer.wpm = config.wpm
         morseKeyer.frequency = config.freq
+        morseKeyer.keyMode = config.key
         localStorage.setItem("setting", JSON.stringify(config))
     }
 
     document.getElementById("vol").onchange = storeSetting
     document.getElementById("freq").onchange = storeSetting
     document.getElementById("wpm").onchange = storeSetting
+    document.getElementById("key").onchange = storeSetting
 
     document.getElementById("freq_value").textContent = document.getElementById("freq").value
     document.getElementById("freq").addEventListener("input", (event) => {
