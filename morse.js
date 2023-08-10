@@ -557,12 +557,13 @@ class MorseKeyer {
 
     set volume(vol = 50) {
         this.start()
+ //       debugger;
         this._volume = vol
         console.log("volume " + this._volume)
         let v = Math.pow(this._volume / 100, 3)  ////Math.exp( this._volume )
         console.log("WRITE VOL " + v)
 
-        this._totalGain.gain.exponentialRampToValueAtTime(v, this._ctx.currentTime + 0.03)
+        this._totalGain.gain.exponentialRampToValueAtTime(v, this._ctx.currentTime ) //+ 0.03
     }
 
     set wpm(wpm = 50) {
@@ -585,19 +586,35 @@ class MorseKeyer {
 
     start() {
         if (this._started === false) {
+     //       debugger;
             this._started = true
             this._ctx = new (window.AudioContext || window.webkitAudioContext)() // web audio context
 
+
+            this._analyser = this._ctx.createAnalyser()
+            this._analyser.fftSize = 32768 
+            this._bufferLength = this._analyser.frequencyBinCount
+            this._dataArray = new Uint8Array(this._bufferLength)
+
+            this._analyser.connect(this._ctx.destination)
+//            this._analyser.connect(this._ctx.destination)            
+
             this._gain = this._ctx.createGain()
-            this._gain.connect(this._ctx.destination)
+//            this._gain.connect(this._ctx.destination)
+            this._gain.connect(this._analyser)            
 
             this._gain.gain.value = 0.5 * 0.5 * 0.6 // * (this._volume / 100)
 
             this._lpf = this._ctx.createBiquadFilter()
             this._lpf.type = "lowpass"
 
-            this._lpf.frequency.setValueAtTime(this._freq, this._ctx.currentTime)
-            this._lpf.Q.setValueAtTime(12, this._ctx.currentTime)
+            this._lpf.frequency.setValueAtTime(500, this._ctx.currentTime)
+            this._lpf.Q.setValueAtTime(20, this._ctx.currentTime)
+
+//            this._lpf.frequency.setValueAtTime(this._freq, this._ctx.currentTime)
+//            this._lpf.Q.setValueAtTime(12, this._ctx.currentTime) 
+
+            
             this._lpf.connect(this._gain)
 
             this._cwGain = this._ctx.createGain()
@@ -605,10 +622,11 @@ class MorseKeyer {
             this._cwGain.connect(this._lpf)
 
             this._totalGain = this._ctx.createGain()
-            this._totalGain.gain.value = 1
+//            this._totalGain.gain.value = 0.5
+            this.volume = this._volume
             this._totalGain.connect(this._cwGain)
 
-            this.volume = this._volume
+       //     this.volume = this._volume
 
             this._oscillator = this._ctx.createOscillator()
             this._oscillator.type = 'sine'
@@ -620,7 +638,53 @@ class MorseKeyer {
         }
     }
 
+
+    draw() {
+
+
+ //       this._analyser.getByteTimeDomainData(this._dataArray)
+        
+        
+    //    drawVisual = requestAnimationFrame(draw);
+        let canvas = document.getElementById("viz")
+        let WIDTH = canvas.width;
+        let HEIGHT = canvas.height;
+        
+        let canvasCtx = canvas.getContext("2d");
+        this._analyser.getByteTimeDomainData(this._dataArray);
+     //   console.log(this._dataArray)
+ 
+      
+        canvasCtx.fillStyle = "rgb(200, 200, 200)";
+        canvasCtx.fillRect(0, 0, WIDTH, HEIGHT);
+      
+        canvasCtx.lineWidth = 2;
+        canvasCtx.strokeStyle = "rgb(0, 0, 0)";
+      
+        const sliceWidth = (WIDTH * 1.0) / this._bufferLength;
+        let x = 0;
+      
+        canvasCtx.beginPath();
+        for (let i = 0; i < this._bufferLength; i++) {
+          const v = this._dataArray[i] / 128.0;
+          const y = (v * HEIGHT) / 2;
+      
+          if (i === 0) {
+            canvasCtx.moveTo(x, y);
+          } else {
+            canvasCtx.lineTo(x, y);
+          }
+      
+          x += sliceWidth;
+        }
+      
+        canvasCtx.lineTo(WIDTH, HEIGHT / 2);
+        canvasCtx.stroke();
+      }
+
+
     tick() {
+        this.draw()
         // called at begin of each tick        
         this._ticking = true
         if (this._keyerMode === 'B') {
