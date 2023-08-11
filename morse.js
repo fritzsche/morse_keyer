@@ -495,6 +495,9 @@ class MorseKeyer {
         this._displayCallback = displayCallback
         this._lastTime = 0
 
+        this._lastDitKey = 0
+        this._lastDahKey = 0
+
         if (key === "CURTIS_A")
             this, _keyerMode = 'A';
         else this._keyerMode = 'B'
@@ -723,6 +726,18 @@ class MorseKeyer {
 
 
     keydown(key) {
+        let now = (new Date()).getTime()
+        let delta = 0
+        if (key === DAH) {
+            delta = now - this._lastDahKey
+            this._lastDahKey = now
+        } else {
+            delta = now - this._lastDitKey
+            this._lastDitKey = now
+        }
+        if (delta < 30) {
+            return 
+        } 
         this.start()
         // only DAH key
         if (key === DAH && this._dahKey === UP) {
@@ -745,6 +760,20 @@ class MorseKeyer {
     }
 
     keyup(key) {
+        let now = (new Date()).getTime()
+        let delta = 0
+        if (key === DAH) {
+            delta = now - this._lastDahKey
+            this._lastDahKey = now
+        } else {
+            delta = now - this._lastDitKey
+            this._lastDitKey = now
+        }
+/*        if (delta < 30) {
+            console.log(delta)  
+            return 
+        } 
+*/
         this.start()
         this._iambic = false
         if (key === DAH) this._dahKey = UP; else this._ditKey = UP
