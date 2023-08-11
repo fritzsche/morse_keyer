@@ -162,17 +162,13 @@ class Morse {
         this._state = 'STOPPED'
         this._cwGain.gain.cancelScheduledValues(this._ctx.currentTime)
         this._cwGain.gain.value = 0
-        console.log(this._scheduled)
         //       this._currPos -= this._scheduled
         const time = this._ctx.currentTime - this._startTime
-        console.log("time ", time)
         clearTimeout(this._stopTimer)
         // in case we already schedules all entries we need to set 
         // position to last element
         if (this._currPos >= this._seqence.length) this._currPos = this._seqence.length - 1
         for (; ;) {
-
-            console.log(this._currPos, this._seqence[this._currPos].time, time, this._seqence[this._currPos].action)
             const seq = this._seqence[this._currPos]
 
             if ((time >= seq.time && seq.action === 'DISPLAY') || this._currPos == 0) break;
@@ -180,13 +176,11 @@ class Morse {
         }
         for (const timer of this._scheduled) {
             clearTimeout(timer)
-            console.log("Clear" + timer)
         }
     }
     // https://github.com/cwilso/metronome/
     // https://www.html5rocks.com/en/tutorials/audio/scheduling/
     _morsePlay() {
-        console.log("play ", this._currPos, this._seqence.length)
         if (this._currPos >= this._seqence.length) this._currPos = 0
         switch (this._state) {
             case 'INITIAL':
@@ -224,7 +218,6 @@ class Morse {
                             // executing now the first element in the scheduled events.
                             // need to remove it from array
                             this._state = 'INITIAL';
-                            console.log("set initial")
                             this._currPos = 0;
 
                         }, milis);
@@ -261,7 +254,6 @@ class Morse {
                             }, milis);
                             // Schedule gui event 
                             this._scheduled.push(timerId)
-                            console.log("add", timerId)
                             break;
                         }
                     }
@@ -542,7 +534,6 @@ class MorseKeyer {
     }
 
     playElement(e) {
-        console.log("Element: " + e)
         this._appendElement(e)
         this._lastElement = e
         this._cwGain.gain.setValueAtTime(1, this._ctx.currentTime)
@@ -557,13 +548,9 @@ class MorseKeyer {
 
     set volume(vol = 50) {
         this.start()
- //       debugger;
         this._volume = vol
-        console.log("volume " + this._volume)
         let v = Math.pow(this._volume / 100, 3)  ////Math.exp( this._volume )
-        console.log("WRITE VOL " + v)
-
-        this._totalGain.gain.exponentialRampToValueAtTime(v, this._ctx.currentTime ) //+ 0.03
+        this._totalGain.gain.exponentialRampToValueAtTime(v, this._ctx.currentTime /+ 0.03 ) 
     }
 
     set wpm(wpm = 50) {
@@ -586,7 +573,6 @@ class MorseKeyer {
 
     start() {
         if (this._started === false) {
-     //       debugger;
             this._started = true
             this._ctx = new (window.AudioContext || window.webkitAudioContext)() // web audio context
 
@@ -608,12 +594,8 @@ class MorseKeyer {
             this._lpf = this._ctx.createBiquadFilter()
             this._lpf.type = "lowpass"
 
-            this._lpf.frequency.setValueAtTime(500, this._ctx.currentTime)
+            this._lpf.frequency.setValueAtTime(this._freq, this._ctx.currentTime)
             this._lpf.Q.setValueAtTime(20, this._ctx.currentTime)
-
-//            this._lpf.frequency.setValueAtTime(this._freq, this._ctx.currentTime)
-//            this._lpf.Q.setValueAtTime(12, this._ctx.currentTime) 
-
             
             this._lpf.connect(this._gain)
 
@@ -622,11 +604,8 @@ class MorseKeyer {
             this._cwGain.connect(this._lpf)
 
             this._totalGain = this._ctx.createGain()
-//            this._totalGain.gain.value = 0.5
             this.volume = this._volume
             this._totalGain.connect(this._cwGain)
-
-       //     this.volume = this._volume
 
             this._oscillator = this._ctx.createOscillator()
             this._oscillator.type = 'sine'
@@ -652,7 +631,6 @@ class MorseKeyer {
         
         let canvasCtx = canvas.getContext("2d");
         this._analyser.getByteTimeDomainData(this._dataArray);
-     //   console.log(this._dataArray)
  
       
         canvasCtx.fillStyle = "rgb(200, 200, 200)";
@@ -684,18 +662,17 @@ class MorseKeyer {
 
 
     tick() {
-        this.draw()
+        // To output the wave form uncomment next line
+        //        this.draw()
         // called at begin of each tick        
         this._ticking = true
         if (this._keyerMode === 'B') {
             // Curtis B
             // We have played dit and start dah. If Dit memory in not set it will be set
             if (this._lastElement === DIT && this._iambic && !this._ditMemory) {
-                console.log("IAMBIC B")
                 this._dahMemory = true
                 // We have played a dah and start with did. If Dah memory is not set it will be st
             } else if (this._lastElement === DAH && this._iambic && !this._dahMemory) {
-                console.log("IAMBIC B")
                 this._ditMemory = true
             }
         }
@@ -703,7 +680,6 @@ class MorseKeyer {
         // check dit memory 
         if (this._ditMemory && this._lastElement === DAH) {
             // delete memory
-            console.log("Dit Memory")
             this._ditMemory = false
             this.playElement(DIT)
             return
@@ -711,15 +687,12 @@ class MorseKeyer {
         // check dah memory
         if (this._dahMemory && this._lastElement === DIT) {
             // delete memory
-            console.log("Dah Memory")
             this._dahMemory = false
             this.playElement(DAH)
             return
         }
         // check if iambic action is ongoing
         if (this._iambic) {
-            console.log("iambic" + this._lastElement)
-
             if (this._lastElement === DIT) {
                 this.playElement(DAH)
                 return
@@ -755,7 +728,6 @@ class MorseKeyer {
         if (key === DAH && this._dahKey === UP) {
             this._dahKey = DOWN
             if (this._ticking) {
-                console.log("set dah Memory")
                 this._dahMemory = true
             }
         }
@@ -763,7 +735,6 @@ class MorseKeyer {
         else if (key === DIT && this._ditKey === UP) {
             this._ditKey = DOWN
             if (this._ticking) {
-                console.log("set dit Memory")
                 this._ditMemory = true
             }
         }
@@ -774,7 +745,6 @@ class MorseKeyer {
     }
 
     keyup(key) {
-        console.log("up")
         this.start()
         this._iambic = false
         if (key === DAH) this._dahKey = UP; else this._ditKey = UP
@@ -823,7 +793,6 @@ window.onload = function () {
             freq: document.getElementById("freq").value,
             key: document.getElementById("key").value,
         }
-        console.log("conf write")
         morseKeyer.volume = config.vol
         morseKeyer.wpm = config.wpm
         morseKeyer.frequency = config.freq
@@ -852,7 +821,6 @@ window.onload = function () {
         // this prevents multiple keydowns on windows 
         if (!isSafari && keyAllowed[e.code] === false) return;
         keyAllowed[e.code] = false
-        console.log("down " + e.code)
         if (e.code === "ShiftLeft" || e.code === "ControlLeft" || e.code === "Period") {
             if (isSafari && morseKeyer._ditKey === DOWN) morseKeyer.keyup(DIT);
             else morseKeyer.keydown(DIT)
@@ -864,7 +832,6 @@ window.onload = function () {
     }
     window.onkeyup = function (e) {
         keyAllowed[e.code] = true;
-        console.log("up " + e.code)
         if (e.code == "ShiftLeft" || e.code === "ControlLeft" || e.code === "Period") {
             morseKeyer.keyup(DIT)
         }
